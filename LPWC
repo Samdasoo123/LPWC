@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>연애 심리 월드컵 · 16강(영상)</title>
+  <style>
+    :root{--bg:#0b0f14;--card:#111822;--muted:#8aa0b2;--text:#e6edf3;--accent:#4da3ff;--accent2:#6dff9c}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Pretendard,Noto Sans KR;background:var(--bg);color:var(--text)}
+    .wrap{max-width:1100px;margin:0 auto;padding:20px}
+    header{padding:16px 20px;border-bottom:1px solid #1b2430;display:flex;justify-content:space-between;align-items:center}
+    h1{font-size:18px;margin:0}
+    .btn{appearance:none;border:1px solid #2b3b52;background:#0f1722;color:var(--text);padding:12px 18px;border-radius:12px;cursor:pointer}
+    .btn:hover{border-color:#3a5170}
+    .btn.primary{border-color:#2b6cff;background:#143160}
+    .card{background:var(--card);border:1px solid #1d2633;border-radius:16px;padding:16px}
+    .center{display:grid;place-items:center;text-align:center;gap:16px}
+    .muted{color:var(--muted)}
+    .small{font-size:12px}
+
+    /* Game */
+    .progress{height:10px;background:#0f1620;border:1px solid #233145;border-radius:999px;overflow:hidden;margin:10px 0 16px}
+    .bar{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .2s}
+    .pair{display:grid;grid-template-columns:1fr;gap:16px}
+    @media(min-width:900px){.pair{grid-template-columns:1fr 1fr}}
+    .candidate{background:#0e141d;border:1px solid #243144;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;transition:transform .08s ease,border-color .15s}
+    .candidate:hover{transform:translateY(-2px);border-color:#2f425d}
+    .media{--ar:16/9;aspect-ratio:var(--ar);background:#0a0f16;display:flex;align-items:center;justify-content:center}
+    .media video,.media img{width:100%;height:100%;object-fit:cover;display:block}
+    .label{padding:10px 12px;display:flex;justify-content:space-between;gap:8px}
+    .name{font-weight:600}
+    .seed{font-size:12px;color:var(--muted)}
+
+    /* Result */
+    #result h2{margin:0}
+    .tags{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+    .tag{border:1px solid #2b3b52;color:#9db1c6;border-radius:999px;padding:4px 10px;font-size:12px}
+    .bars{display:grid;gap:8px;max-width:520px;margin:16px auto}
+    .barrow{display:grid;grid-template-columns:120px 1fr;align-items:center;gap:10px}
+    .barrow .meter{height:8px;background:#0f1620;border:1px solid #233145;border-radius:999px;overflow:hidden}
+    .barrow .fill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+
+    /* Spotlight (우승자 강조) */
+    #spotlight .title{font-size:28px;margin:0 0 8px}
+    #spotlight .media{--ar:16/9;aspect-ratio:var(--ar);max-width:780px;width:100%;border-radius:16px;overflow:hidden;border:1px solid #1d2633}
+    .pulse{animation:pulse 1.2s ease-in-out infinite}
+    @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.02)}100%{transform:scale(1)}}
+
+    /* === VIEW STATE (authoritative, keep at end) === */
+    main>section{display:none !important}
+    body[data-view="intro"] #intro{display:grid !important}
+    body[data-view="game"] #game{display:block !important}
+    body[data-view="spotlight"] #spotlight{display:grid !important}
+    body[data-view="result"] #result{display:grid !important}
+  </style>
+</head>
+<body data-view="intro">
+  <header>
+    <h1>연애 심리 월드컵 · 16강(영상)</h1>
+    <div>
+      <button id="shareBtn" class="btn">결과 공유</button>
+      <button id="resetBtn" class="btn">처음부터</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- Intro -->
+    <section id="intro" class="card center">
+      <h2>3분 연애 심리 테스트</h2>
+      <p class="muted">상황을 고르며 가볍게 하는 16강 월드컵. 마지막 우승으로 내 연애 성향을 알아봐요.</p>
+      <div class="small muted">Tip: 키보드 ←/→ 또는 A/D 로도 선택 가능</div>
+      <button id="startBtn" class="btn primary">시작하기</button>
+    </section>
+
+    <!-- Game -->
+    <section id="game" style="display:none">
+      <div class="card">
+        <div class="small muted" id="roundText">16강 진행 중</div>
+        <div class="progress"><div id="bar" class="bar"></div></div>
+        <div id="pair" class="pair"></div>
+      </div>
+    </section>
+
+    <!-- Spotlight (우승자 3초 강조) -->
+    <section id="spotlight" class="center card" style="display:none">
+      <div class="tag">최종 우승</div>
+      <h2 class="title">우승자를 소개합니다!</h2>
+      <div id="spotlightMedia" class="media pulse"></div>
+      <div class="small muted">3초 후 결과 해석이 표시됩니다…</div>
+    </section>
+
+    <!-- Result -->
+    <section id="result" class="center card" style="display:none">
+      <div class="tag">결과</div>
+      <div id="winnerMedia" class="media" style="max-width:720px;width:100%"></div>
+      <h2 id="profileTitle">당신의 연애 심리</h2>
+      <p id="profileDesc" class="muted"></p>
+      <div class="tags" id="profileTags"></div>
+      <div class="bars" id="axisBars"></div>
+      <div><button id="againBtn" class="btn primary">다시 하기</button></div>
+    </section>
+  </main>
+
+  <script>
+    // ===== 설정: 5초 영상 샘플 =====
+    const SAMPLE_VIDEO = 'https://cdn.pixabay.com/vimeo/255784816/blue-15317.mp4?width=1280&hash=2ed9e';
+
+    // 태그 축
+    const AXES = ['안정','자극','직접','배려','계획','즉흥','분리','함께','문제해결','쿨다운','말로','행동'];
+
+    // 16개 카드
+    const CARDS_16 = [
+      {id:'S1', type:'situation', title:'즉석 바다 드라이브', subtitle:'vs 집콕 무비나잇', tags:['자극','즉흥'], media:{kind:'video', src:SAMPLE_VIDEO}},
+      {id:'S2', type:'situation', title:'지금 바로 풀자!', subtitle:'vs 내일 컨디션 좋을 때', tags:['문제해결','직접'], media:{kind:'video', src:SAMPLE_VIDEO}},
+      {id:'S3', type:'situation', title:'빽빽 여행 플랜', subtitle:'vs 여유롭게 즉석', tags:['계획'], media:{kind:'video', src:SAMPLE_VIDEO}},
+      {id:'S4', type:'situation', title:'하루 한 통 필수', subtitle:'vs 자유 연락', tags:['함께','말로'], media:{kind:'video', src:SAMPLE_VIDEO}},
+      {id:'S5', type:'situation', title:'이벤트는 크게!', subtitle:'vs 실용 선물', tags:['행동','안정'], media:{kind:'video', src:SAMPLE_VIDEO}},
+      {id:'S6', type:'situation', title:'연락 잦게', subtitle:'vs 적지만 깊게', tags:['함께','직접'], media:{kind:'video', src:SAMPLE_VIDEO}},
+      {id:'S7', type:'situation', title:'타협안 먼저 제시', subtitle:'vs 잠깐 쿨다운', tags:['문제해결'], media:{kind:'video', src:SAMPLE_VIDEO}},
+      {id:'S8', type:'situation', title:'신상 미식 탐방', subtitle:'vs 단골 루틴', tags:['자극'], media:{kind:'video', src:SAMPLE_VIDEO}},
+      {id:'C1', type:'character', title:'약속 철저 플래너', tags:['안정','계획'], media:{kind:'video', src:SAMPLE_VIDEO}},
+      {id:'C2', type:'character', title:'즉흥 에너지 뿜뿜', tags:['자극','즉흥'], media:{kind:'video', src:SAMPLE_VIDEO}},
+      {id:'C3', type:'character', title:'솔직 직설 화법', tags:['직접'], media:{kind:'video', src:SAMPLE_VIDEO}},
+      {id:'C4', type:'character', title:'분위기 배려파', tags:['배려','함께'], media:{kind:'video', src:SAMPLE_VIDEO}},
+      {id:'C5', type:'character', title:'개인시간 중요', tags:['분리'], media:{kind:'video', src:SAMPLE_VIDEO}},
+      {id:'C6', type:'character', title:'행동으로 보여줌', tags:['행동'], media:{kind:'video', src:SAMPLE_VIDEO}},
+      {id:'C7', type:'character', title:'말로 확인받고 싶음', tags:['말로'], media:{kind:'video', src:SAMPLE_VIDEO}},
+      {id:'C8', type:'character', title:'솔루션 제시형', tags:['문제해결','직접'], media:{kind:'video', src:SAMPLE_VIDEO}},
+    ];
+
+    // ===== 유틸 =====
+    const $ = (s)=>document.querySelector(s);
+    const shuffle=(a)=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+
+    // ===== 상태 =====
+    let bracket=[], queue=[], nextRound=[], history=[], played=0, winner=null;
+
+    // ===== 뷰 전환 =====
+    function setView(v){ document.body.setAttribute('data-view', v); }
+    function showIntro(){ setView('intro'); }
+    function showGame(){ setView('game'); }
+    function showSpotlight(){ setView('spotlight'); }
+    function showResult(){ setView('result'); }
+
+    // ===== 토너먼트 =====
+    function seedPairs(arr){ const s=shuffle([...arr]); const pairs=[]; for(let i=0;i<s.length;i+=2){ pairs.push([s[i], s[i+1]]);} return pairs; }
+    function start(){
+      bracket = shuffle([...CARDS_16]);
+      queue = seedPairs(bracket);
+      nextRound = []; history = []; winner=null; played=0;
+      $('#roundText').textContent = '16강 시작';
+      $('#bar').style.width='0%';
+      renderPair(); showGame();
+    }
+
+    function renderPair(){
+      const root = $('#pair'); root.innerHTML='';
+      if(queue.length===0){
+        if(nextRound.length===1){ winner = nextRound[0]; return showSpotlightThenProfile(); }
+        bracket = nextRound; nextRound=[]; queue = seedPairs(bracket);
+        const info = bracket.length===8? '8강 시작' : bracket.length===4? '4강 시작' : bracket.length===2? '준결승 시작' : '결승전';
+        $('#roundText').textContent = info; renderPair(); return;
+      }
+      const [a,b]=queue[0];
+      const make = (card,side)=>{
+        const btn = document.createElement('button'); btn.className='candidate';
+        btn.innerHTML = `
+          <div class="media"><video src="${card.media?.src||''}" autoplay muted loop playsinline preload="metadata" disablepictureinpicture controlslist="nodownload noplaybackrate noremoteplayback nofullscreen"></video></div>
+          <div class="label"><span class="name">${card.title}</span><span class="seed">${side==='L'?'← [A]':'→ [D]'}</span></div>`;
+        btn.addEventListener('click', ()=> pick(card, a, b));
+        return btn;
+      };
+      root.appendChild(make(a,'L')); root.appendChild(make(b,'R'));
+    }
+
+    function pick(chosen, left, right){
+      nextRound.push(chosen); queue.shift(); played++;
+      const pct = Math.min(100, Math.round((played/15)*100)); $('#bar').style.width = pct+'%';
+      history.push({left:left.id, right:right.id, pick:chosen.id, round: bracket.length});
+      renderPair();
+    }
+
+    // ===== 결과 계산 & 표시 =====
+    function calcProfile(){
+      const score = Object.fromEntries(AXES.map(a=>[a,0]));
+      winner.tags?.forEach(t=> score[t] = (score[t]||0)+3);
+      const tail = history.slice(-3);
+      for(const m of tail){
+        const opp = [m.left,m.right].find(id=>id!==m.pick);
+        const oppCard = CARDS_16.find(c=>c.id===opp);
+        oppCard?.tags?.forEach(t=> score[t] += (m.round===2?1:0.5));
+      }
+      const sorted = Object.entries(score).sort((a,b)=>b[1]-a[1]);
+      return {top3: sorted.slice(0,3)};
+    }
+
+    function profileText(top3){
+      const keys = top3.map(([k])=>k);
+      const name = (keys.includes('안정')&&keys.includes('계획'))? '믿음직 플래너' :
+                   (keys.includes('자극')&&keys.includes('즉흥'))? '스파클러' :
+                   (keys.includes('직접')&&keys.includes('문제해결'))? '솔루션 드리블러' :
+                   '마이 페이스 러버';
+      const desc = {
+        '믿음직 플래너':'약속과 루틴이 마음을 편하게 해요. 계획 공유하면 애정도↑',
+        '스파클러':'새로움에 심장이 반짝! 즉석 제안, 작은 모험에 설레요.',
+        '솔루션 드리블러':'돌려 말하는 건 답답! 상황을 두고 바로 해결하는 편.',
+        '마이 페이스 러버':'무리하지 않고 내 템포로. 편안함이 오래 가는 타입.'
+      }[name];
+      return {name, desc};
+    }
+
+    function showSpotlightThenProfile(){
+      $('#spotlightMedia').innerHTML = `<video src="${winner.media?.src||''}" autoplay muted loop playsinline preload="metadata" disablepictureinpicture controlslist="nodownload noplaybackrate noremoteplayback nofullscreen"></video>`;
+      $('#pair').innerHTML='';
+      $('#roundText').textContent = '우승 확정';
+      $('#bar').style.width='100%';
+      showSpotlight();
+      setTimeout(()=>{ showProfile(); }, 3000);
+    }
+
+    function showProfile(){
+      const {top3} = calcProfile();
+      const {name, desc} = profileText(top3);
+      $('#winnerMedia').innerHTML = `<video src="${winner.media?.src||''}" autoplay muted loop playsinline preload="metadata" disablepictureinpicture controlslist="nodownload noplaybackrate noremoteplayback nofullscreen"></video>`;
+      $('#profileTitle').textContent = `당신은 «${name}» 타입`;
+      $('#profileDesc').textContent = desc;
+      $('#profileTags').innerHTML = (winner.tags||[]).map(t=>`<span class="tag">#${t}</span>`).join('');
+      const bars = top3.map(([k,v])=>{
+        const pct = Math.min(100, Math.round((v/4.5)*100));
+        return `<div class="barrow"><div class="muted small">${k}</div><div class="meter"><div class="fill" style="width:${pct}%"></div></div></div>`;
+      }).join('');
+      $('#axisBars').innerHTML = bars;
+      showResult();
+    }
+
+    // ===== 이벤트 =====
+    $('#startBtn').addEventListener('click', start);
+    $('#againBtn').addEventListener('click', start);
+    $('#resetBtn').addEventListener('click', showIntro);
+
+    $('#shareBtn').addEventListener('click', async ()=>{
+      const url = new URL(location.href);
+      if(winner){ url.searchParams.set('winner', winner.id); }
+      const shareUrl = url.toString();
+      try{
+        if(navigator.share){ await navigator.share({title:'연애 심리 월드컵', url:shareUrl}); }
+        else { await navigator.clipboard.writeText(shareUrl); alert('링크 복사 완료'); }
+      }catch(e){ prompt('아래 링크를 복사하세요', shareUrl); }
+    });
+
+    // 키보드 단축키 (게임 화면에서만)
+    window.addEventListener('keydown',(e)=>{
+      if(document.body.dataset.view !== 'game') return;
+      const [leftBtn,rightBtn] = document.querySelectorAll('#pair .candidate');
+      if(!leftBtn||!rightBtn) return;
+      if(['ArrowLeft','a','A'].includes(e.key)) leftBtn.click();
+      if(['ArrowRight','d','D'].includes(e.key)) rightBtn.click();
+    });
+
+    // 초기: 인트로만
+    document.addEventListener('DOMContentLoaded', ()=>{ showIntro(); });
+  </script>
+</body>
+</html>
