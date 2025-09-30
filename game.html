@@ -20,6 +20,8 @@
       --bar-grad:linear-gradient(90deg,#ff9ad0,#ffd2a4,#8ef0d0,#b7a9ff);
       --bar-stripe:repeating-linear-gradient(45deg, rgba(255,255,255,.45) 0 10px, rgba(255,255,255,0) 10px 20px);
       --accent:#ff5fa6;
+      /* landscape에서 JS로 덮어쓸 카드 높이 */
+      --cardH: 78vh;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -164,11 +166,34 @@
     /* 하트 */
     .heart{ position:fixed; pointer-events:none; z-index:9999; font-size:16px; animation: float 900ms ease forwards; filter: drop-shadow(0 4px 8px rgba(255,105,180,.35)); }
     @keyframes float{ 0%{ transform:translate(-50%,-30%) scale(.8); opacity:.9 } 70%{ opacity:1 } 100%{ transform:translate(-50%,-120%) scale(1.2); opacity:0 } }
+
+    /* === 모바일/태블릿 가로(landscape) 맞춤: 두 카드가 한 화면에 다 보이게 === */
+    @media (orientation: landscape) {
+      .wrap{ padding: 12px 14px; }
+      .arena{ padding: 12px; border-radius: 18px; }
+      .pair{ gap: 10px; grid-template-columns: 1fr 1fr; }
+      .candidate{ border-radius: 18px; }
+      .label{ padding: 8px 12px; }
+
+      /* 핵심: 고정 비율 대신 동적 높이 + contain */
+      .mediaV{
+        aspect-ratio: auto;
+        height: var(--cardH);
+        max-height: var(--cardH);
+        background:#fff1f7;
+      }
+      .mediaV>*{
+        width: 100%;
+        height: 100%;
+        object-fit: contain !important;
+        object-position: center center;
+      }
+    }
   </style>
 </head>
 <body data-view="game">
   <header>
-    <!-- 홈 이동은 항상 상대경로 ./ 로 (index.html) -->
+    <!-- 로고 클릭 시 항상 타이틀(index.html)로 -->
     <a class="brand" href="./" aria-label="연애 심리 월드컵 홈으로">
       <img src="./assets/logo/logo_main_kr.png" alt="연애 심리 월드컵 로고(작게)">
     </a>
@@ -310,6 +335,7 @@
       queue = seedPairs(bracket);
       next = []; history=[]; played=0; winner=null; picking=false;
       setView('game'); updateRoundTag(); updateProgress(); renderPair();
+      fitLandscapeCardHeight(); // 시작 시 한 번 계산
     }
 
     function renderPair(){
@@ -335,6 +361,7 @@
         return btn;
       };
       root.appendChild(make(a,'L')); root.appendChild(make(b,'R'));
+      fitLandscapeCardHeight(); // 새로 렌더링될 때마다 재계산
     }
 
     function pick(chosen,left,right,evt){
@@ -432,6 +459,29 @@
       const iv=setInterval(()=>{ t--; el.textContent=`(${t}s)`; if(t<=0){clearInterval(iv); el.textContent=''; done();}},1000);
     }
 
+    /* === 가로모드에서 카드 2장이 한 화면에 들어가도록 동적 높이 계산 === */
+    function fitLandscapeCardHeight(){
+      if (window.matchMedia('(orientation: landscape)').matches) {
+        const h = window.innerHeight;
+        const headerH = document.querySelector('header')?.offsetHeight || 0;
+        const barH = document.querySelector('.barwrap')?.offsetHeight || 0;
+
+        // 여백/패딩 보정치 (기기마다 조금 조정 가능)
+        const safety = 34 + 14 + 52; // arena/pair/label 여유치
+        const usable = Math.max(240, h - headerH - barH - safety);
+
+        // 과도하게 커지지 않도록 상한
+        const cardH = Math.min(usable, Math.floor(h * 0.92));
+
+        document.documentElement.style.setProperty('--cardH', cardH + 'px');
+      } else {
+        // 세로 모드에서는 기본값으로
+        document.documentElement.style.setProperty('--cardH', '78vh');
+      }
+    }
+    window.addEventListener('resize', fitLandscapeCardHeight);
+    window.addEventListener('orientationchange', fitLandscapeCardHeight);
+
     /* 이벤트 */
     function shareNow(){
       const url=new URL(location.href); if(winner) url.searchParams.set('winner', winner.id);
@@ -444,8 +494,7 @@
       })();
     }
 
-    // ✅ 홈 이동은 항상 ./ 로 (index.html)
-    document.getElementById('btnHome').addEventListener('click', ()=> location.assign('./'));
+    document.getElementById('btnHome').addEventListener('click', ()=> location.href='./');
     document.getElementById('btnAgain').addEventListener('click', start);
     document.getElementById('btnShare').addEventListener('click', shareNow);
 
