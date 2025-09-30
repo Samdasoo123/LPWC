@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>연애 심리 월드컵 — 시작</title>
+
+<!-- 성능: 프리로드(선택) -->
+<link rel="preload" as="image" href="./assets/bg/bg_4k.jpg">
+<link rel="preload" as="image" href="./assets/logo/logo_main_kr.png">
+<link rel="preload" as="audio" href="./assets/audio/bgm_title.wav">
+<link rel="preload" as="audio" href="./assets/audio/ui_ok.wav">
+
+<style>
+  /* 한글 웹폰트가 있으면 사용, 없으면 시스템 폰트 */
+  @font-face{
+    font-family:'KRUI';
+    src:url('./assets/font/Pretendard.woff2') format('woff2');
+    font-display:swap;
+  }
+
+  :root{--bg:#0b0f14;--text:#e6edf3;--muted:#8aa0b2;--hl:#4da3ff}
+  *{box-sizing:border-box} html,body{height:100%}
+  body{
+    margin:0;background:var(--bg);color:var(--text);
+    font-family:KRUI,system-ui,-apple-system,Segoe UI,Roboto,'Noto Sans KR',sans-serif;
+  }
+
+  .stage{position:relative;min-height:100vh;overflow:hidden}
+  .layer{position:absolute;inset:0;background-position:center;background-size:cover;will-change:transform}
+  .bg{background-image:url('./assets/bg/bg_4k.jpg')}
+
+  /* 비네트 */
+  .vignette{
+    position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(60% 60% at 50% 60%,transparent,rgba(0,0,0,.35));
+  }
+
+  /* ===== 로고(위로/작게) + 글로우 ===== */
+  .logo{
+    position:absolute;
+    left:50%;
+    top:calc(16vh + env(safe-area-inset-top, 0px));
+    transform:translateX(-50%);
+    text-align:center; z-index:50;
+  }
+  .logo picture,.logo img{display:block}
+  .logo img{
+    width: clamp(220px, 48vw, 720px);
+    height:auto;
+    image-rendering:auto;
+    filter:drop-shadow(0 6px 16px rgba(0,0,0,.6));
+  }
+  .logo-glow{
+    position:absolute; left:50%; top:calc(16vh + env(safe-area-inset-top, 0px));
+    transform:translateX(-50%);
+    width:48vw; height:16vh; pointer-events:none; z-index:40;
+    filter:blur(36px);
+    background:radial-gradient(closest-side, rgba(255,105,180,.35), transparent);
+  }
+
+  /* 짧은 화면 */
+  @media (max-height: 760px){
+    .logo{ top: calc(6vh + env(safe-area-inset-top, 0px)); }
+    .logo img{ width: clamp(200px, 42vw, 640px); }
+    .logo-glow{ top: calc(8vh + env(safe-area-inset-top, 0px)); width: 42vw; height: 14vh; }
+  }
+  /* 좁은 모바일 가로 */
+  @media (max-width: 480px){
+    .logo img{ width: clamp(200px, 52vw, 560px); }
+  }
+
+  /* ===== 버튼 ===== */
+  .menu{
+    position:absolute;left:50%;bottom:12vh;transform:translateX(-50%);
+    display:grid;gap:10px
+  }
+  .btn{
+    appearance:none;
+    border:1px solid #2b3b52;
+    background:rgba(15,23,34,.6);
+    backdrop-filter:blur(6px);
+    padding:14px 24px;border-radius:12px;
+    color:var(--text);font-weight:700;letter-spacing:.02em;min-width:220px;cursor:pointer;
+    transition:transform .08s ease, border-color .15s, background .15s, box-shadow .15s, color .15s, filter .15s;
+  }
+  .btn:hover{
+    transform:translateY(-2px);
+    border-color:#ff7ab6;
+    color:#fff;
+    background:linear-gradient(180deg,#ff9ac7 0%, #ff5fb0 60%, #ff3f9f 100%);
+    box-shadow:0 0 24px rgba(255,105,180,.45), 0 6px 18px rgba(0,0,0,.35) inset;
+    filter:saturate(1.1);
+  }
+  .btn:focus{
+    outline:2px solid #ff7ab6; outline-offset:2px; border-color:#ff7ab6;
+  }
+
+  /* 하단 텍스트 */
+  .hint{position:absolute;left:50%;bottom:7vh;transform:translateX(-50%);color:var(--muted);font-size:12px;opacity:.9}
+  .corner{position:absolute;right:2vw;bottom:1.5vh;color:var(--muted);font-size:12px;white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="layer bg" data-depth="0.1"></div>
+  <div class="vignette"></div>
+
+  <!-- 로고 글로우(아우라) -->
+  <div class="logo-glow" aria-hidden="true"></div>
+
+  <!-- 로고 -->
+  <div class="logo" aria-label="연애 심리 월드컵">
+    <picture>
+      <img src="./assets/logo/logo_main_kr.png?v=3"
+           alt="연애 심리 월드컵 로고"
+           width="1600" height="400"
+           decoding="async" fetchpriority="high">
+    </picture>
+  </div>
+
+  <nav class="menu" aria-label="메인 메뉴">
+    <button class="btn" id="startBtn">시작하기</button>
+  </nav>
+
+  <div class="hint">Enter 키로도 시작할 수 있어요</div>
+  <div class="corner">© 2025 Fragaria All rights reserved.</div>
+</div>
+
+<script>
+  // 패럴랙스(마우스)
+  const stageEl = document.getElementById('stage');
+  function parallax(e){
+    const x=(e.clientX/window.innerWidth - .5), y=(e.clientY/window.innerHeight - .5);
+    document.querySelectorAll('.layer').forEach(el=>{
+      const d=parseFloat(el.dataset.depth||0);
+      el.style.transform=`translate(${x*-10*d}px, ${y*-6*d}px)`;
+    });
+  }
+  stageEl.addEventListener('pointermove', parallax);
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    stageEl.removeEventListener('pointermove', parallax);
+  }
+
+  // ===== 오디오: hover는 작게 / 클릭은 크게 + BGM 페이드인 & 덕킹 =====
+  const OK  = new Audio('./assets/audio/ui_ok.wav');     // 클릭 사운드(크게)
+  const hoverSE = new Audio('./assets/audio/ui_ok.wav'); // hover 사운드(작게)
+  const BGM = new Audio('./assets/audio/bgm_title.wav'); // 배경음
+
+  OK.volume = 0.85;        // 클릭 크게
+  hoverSE.volume = 0.25;   // hover 작게
+  BGM.loop = true;
+  BGM.volume = 0;          // 페이드인 시작 볼륨
+
+  let bgmStarted = false;
+  function startBGM(){
+    if (bgmStarted) return; bgmStarted = true;
+    BGM.play().then(()=>{
+      const target = 0.5;           // 최종 BGM 볼륨
+      const step = 0.05;            // 증가 폭
+      const iv = setInterval(()=>{
+        BGM.volume = Math.min(target, +(BGM.volume + step).toFixed(2));
+        if (BGM.volume >= target) clearInterval(iv);
+      }, 120/(target/step));        // 대략 1.2초 페이드인
+    }).catch(()=>{});
+  }
+  ['click','touchstart','keydown'].forEach(evt=>{
+    window.addEventListener(evt, startBGM, {once:true, passive:true});
+  });
+  document.addEventListener('visibilitychange', ()=>{
+    if (!document.hidden && bgmStarted && BGM.paused) BGM.play().catch(()=>{});
+  });
+
+  // Hover 재생(쿨다운 + 겹침 방지)
+  const startBtn = document.getElementById('startBtn');
+  let hoverCooldown = 0;
+  function playHover(){
+    const now = performance.now();
+    if (now - hoverCooldown < 120) return;
+    hoverCooldown = now;
+    try { hoverSE.pause(); hoverSE.currentTime = 0; hoverSE.play(); } catch(_) {}
+  }
+  startBtn.addEventListener('mouseenter', playHover);
+  startBtn.addEventListener('pointerenter', playHover);
+
+  // 클릭 시 OK 크게 + BGM 덕킹 후 페이지 이동
+  function startGame(){
+    const prev = BGM.volume;
+    const duck = Math.max(0, prev - 0.25);
+    BGM.volume = duck;
+    setTimeout(()=>{ BGM.volume = prev; }, 300);
+
+    try { OK.pause(); OK.currentTime = 0; OK.play(); } catch(_) {}
+    location.href = './game.html';
+  }
+  startBtn.addEventListener('click', startGame);
+  window.addEventListener('keydown', (e)=>{ if(e.key==='Enter') startGame(); });
+</script>
+</body>
+</html>

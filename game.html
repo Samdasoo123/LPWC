@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>연애 심리 월드컵 · 16강(영상)</title>
+
+  <!-- 프리로드(선택) -->
+  <link rel="preload" as="image" href="./assets/bg/bg_4k.jpg">
+  <link rel="preload" as="image" href="./assets/logo/logo_main_kr.png">
+  <link rel="preload" as="audio" href="./assets/audio/bgm_game.wav">
+  <link rel="preload" as="video" href="./assets/video/S1.mp4">
+  <link rel="preload" as="image" href="./assets/video/poster/S1.jpg">
+
+  <style>
+    :root{
+      --bg:#fff0f6; --ink:#19202a; --muted:#7891a6;
+      --glass:rgba(255,255,255,.65); --line:rgba(255,182,193,.55);
+      --shadow:0 12px 40px rgba(246,86,146,.08), 0 4px 14px rgba(17,12,46,.08);
+      --bar-grad:linear-gradient(90deg,#ff9ad0,#ffd2a4,#8ef0d0,#b7a9ff);
+      --bar-stripe:repeating-linear-gradient(45deg, rgba(255,255,255,.45) 0 10px, rgba(255,255,255,0) 10px 20px);
+      --accent:#ff5fa6;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;color:var(--ink);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Pretendard,'Noto Sans KR',sans-serif;
+      background:
+        radial-gradient(1200px 600px at 20% -10%, rgba(255,213,230,.65), transparent),
+        radial-gradient(1000px 500px at 120% 0%, rgba(255,240,200,.50), transparent),
+        url('./assets/bg/bg_4k.jpg') center/cover fixed no-repeat;
+      position:relative;
+    }
+    body::before{
+      content:""; position:fixed; inset:0; pointer-events:none;
+      background:
+        radial-gradient(60% 60% at 50% 55%, rgba(255,255,255,.10), rgba(0,0,0,.35)),
+        linear-gradient(180deg, rgba(255,255,255,.03), rgba(0,0,0,.2));
+    }
+
+    /* 헤더 */
+    header{
+      position:sticky; top:0; z-index:10; padding:6px 16px;
+      border-bottom:1px solid var(--line);
+      display:flex;justify-content:space-between;align-items:center;
+      backdrop-filter:saturate(120%) blur(10px);
+      background:linear-gradient(180deg, rgba(255,255,255,.55), rgba(255,255,255,.25));
+      box-shadow:0 2px 10px rgba(255,133,192,.12);
+    }
+    .brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+    .brand img{height:40px; width:auto; display:block; filter: drop-shadow(0 2px 6px rgba(255,105,180,.35));}
+    @media (max-width:480px){ .brand img{height:32px} header{padding:4px 12px} }
+
+    .wrap{max-width:1200px;margin:0 auto;padding:24px 20px}
+
+    .btn{
+      appearance:none;border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.7));
+      color:var(--ink); font-weight:800; letter-spacing:.01em;
+      padding:12px 18px; border-radius:14px; cursor:pointer;
+      box-shadow: var(--shadow);
+      transition: transform .08s ease, box-shadow .15s, border-color .15s, background .15s;
+    }
+    .btn:hover{
+      transform:translateY(-1px);
+      box-shadow:0 12px 28px rgba(255,133,192,.25), 0 2px 10px rgba(17,12,46,.08) inset;
+      border-color:rgba(255,133,192,.75);
+    }
+
+    .muted{color:var(--muted)} .small{font-size:12px}
+
+    /* 아레나 카드 */
+    .arena{
+      background:var(--glass);
+      border:1px solid var(--line);
+      border-radius:24px;
+      padding:16px;
+      backdrop-filter: blur(14px) saturate(130%);
+      box-shadow: var(--shadow);
+    }
+
+    /* 진행바 */
+    .barwrap{
+      position:relative; height:22px; border-radius:999px; overflow:hidden;
+      margin:10px 0 16px; background:rgba(255,255,255,.65);
+      border:1px solid rgba(255,133,192,.60); box-shadow: inset 0 1px 2px rgba(0,0,0,.06);
+    }
+    .bar{position:absolute; left:0; top:0; height:100%; width:0%; background:var(--bar-grad); transition:width .25s ease;}
+    .bar::after{content:""; position:absolute; inset:0; background:var(--bar-stripe); mix-blend-mode:soft-light; animation:shine 8s linear infinite;}
+    .bartext{position:absolute; left:50%; top:50%; transform:translate(-50%,-52%); font-size:12px; font-weight:900; color:#ff3a91; text-shadow:0 1px 3px rgba(255,255,255,.9); pointer-events:none;}
+    @keyframes shine{0%{background-position:0 0}100%{background-position:300px 0}}
+
+    /* VS 카드 (세로 9:16) */
+    .pair{ display:grid; gap:18px; align-items:center; grid-template-columns:1fr; }
+    @media (min-width:900px){ .pair{ grid-template-columns:repeat(2, minmax(0, 560px)); justify-content:center; } }
+
+    .candidate{
+      background:linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.7));
+      border:1px solid var(--line); border-radius:24px; overflow:hidden; padding:0;
+      cursor:pointer; display:flex; flex-direction:column;
+      transition:transform .08s ease, box-shadow .15s, border-color .15s; box-shadow: var(--shadow);
+    }
+    .candidate:hover{ transform:translateY(-3px); border-color:rgba(255,133,192,.9); box-shadow:0 20px 42px rgba(255,133,192,.28); }
+    .candidate:active{ transform:translateY(0) scale(.995); }
+    .candidate.pop{ animation:pop .18s ease }
+    @keyframes pop{ 0%{transform:scale(1)} 60%{transform:scale(1.02)} 100%{transform:scale(1)} }
+
+    .mediaV{ position:relative; width:100%; aspect-ratio:9/16; height:auto; max-height:78vh; border-radius:inherit; overflow:hidden; background:#fff1f7; }
+    .mediaV>*{ width:100%; height:100%; object-fit:cover; object-position:center top; display:block; }
+
+    /* Spotlight/Result 공통 미디어(가로 16:9 + 오버레이) */
+    .mediaH{
+      position:relative;
+      max-width:min(60vw, 820px); width:100%; height:auto; aspect-ratio:16/9;
+      border-radius:20px; overflow:hidden; border:1px solid var(--line); background:#fff1f7;
+      box-shadow:0 10px 30px rgba(0,0,0,.12);
+    }
+    .mediaH::after{
+      content:""; position:absolute; inset:0;
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.15));
+      pointer-events:none;
+    }
+    .mediaH>*{ width:100%; height:100%; object-fit:cover; object-position:center; display:block; }
+
+    .label{ padding:12px 16px;display:flex;justify-content:space-between;gap:8px;align-items:center;
+      background:linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.8)); border-top:1px solid var(--line); }
+    .name{font-weight:900; color:var(--accent); letter-spacing:.01em}
+    .seed{font-size:12px;color:var(--muted)}
+
+    .tag{ display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line); background:rgba(255,255,255,.92);
+      border-radius:999px; padding:5px 12px; font-size:12px; color:var(--accent); box-shadow: var(--shadow); font-weight:800; }
+
+    main>section{display:none !important}
+    body[data-view="game"]   #screen-game{display:block !important}
+    body[data-view="spot"]   #screen-spot{display:block !important}
+    body[data-view="result"] #screen-result{display:block !important}
+
+    /* ===== 결과 화면 강화 ===== */
+    .panel{ background:var(--glass); border:1px solid var(--line); border-radius:24px; padding:20px; backdrop-filter: blur(14px) saturate(130%); box-shadow: var(--shadow); }
+    .panel.result{
+      padding:28px 22px;
+      background:linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.6));
+      border:1px solid rgba(255,133,192,.45);
+    }
+    .title{
+      margin:12px 0 8px; font-size:28px; line-height:1.25; font-weight:900; letter-spacing:.01em;
+      text-align:center; color:#101621; text-shadow:0 1px 0 rgba(255,255,255,.7), 0 12px 30px rgba(0,0,0,.08);
+    }
+    @media (max-width:560px){ .title{font-size:22px} }
+    .desc{max-width:760px; text-align:center; margin:6px auto 8px; color:#415163; font-weight:600}
+    .chips{display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin:6px 0 2px}
+
+    .kpis{display:grid; gap:10px; max-width:560px; width:100%; margin:8px auto 14px}
+    .krow{display:grid; grid-template-columns:96px 1fr 48px; gap:10px; align-items:center}
+    .krow .kname{color:#37485a; font-weight:800; text-align:right}
+    .meter{height:12px; background:rgba(0,0,0,.06); border:1px solid rgba(255,133,192,.45); border-radius:999px; overflow:hidden; position:relative}
+    .meter .fill{height:100%; width:0%; background:var(--bar-grad); transition:width .7s ease}
+    .kval{font-weight:900; color:#0f1a26; text-align:left}
+
+    .actions{display:flex; gap:10px; justify-content:center; margin-top:6px; flex-wrap:wrap}
+    .btn.primary{background:linear-gradient(180deg,#ffe1f0,#ffd4ea); border-color:rgba(255,133,192,.7); color:#101621}
+
+    /* 하트 */
+    .heart{ position:fixed; pointer-events:none; z-index:9999; font-size:16px; animation: float 900ms ease forwards; filter: drop-shadow(0 4px 8px rgba(255,105,180,.35)); }
+    @keyframes float{ 0%{ transform:translate(-50%,-30%) scale(.8); opacity:.9 } 70%{ opacity:1 } 100%{ transform:translate(-50%,-120%) scale(1.2); opacity:0 } }
+  </style>
+</head>
+<body data-view="game">
+  <header>
+    <a class="brand" href="start.html" aria-label="연애 심리 월드컵 홈으로">
+      <img src="./assets/logo/logo_main_kr.png" alt="연애 심리 월드컵 로고(작게)">
+    </a>
+    <div>
+      <!-- 상단 공유 버튼 제거 -->
+      <button class="btn" id="btnHome">타이틀로</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- Game -->
+    <section id="screen-game">
+      <div class="arena">
+        <span class="tag" id="roundTag">💘 16강 시작</span>
+        <div class="barwrap" aria-live="polite">
+          <div id="bar" class="bar"></div>
+          <div id="bartext" class="bartext">0 / 15</div>
+        </div>
+        <div id="pair" class="pair"></div>
+      </div>
+    </section>
+
+    <!-- Spotlight -->
+    <section id="screen-spot">
+      <div class="panel center">
+        <div class="tag">🏆 최종 우승</div>
+        <h2 class="title">우승자를 소개합니다! <span id="count" class="small muted"></span></h2>
+        <div id="spotMedia" class="mediaH"></div>
+        <div class="small muted" style="margin-top:6px">곧 결과 해석이 표시됩니다…</div>
+      </div>
+    </section>
+
+    <!-- Result -->
+    <section id="screen-result">
+      <div class="panel result center">
+        <div class="tag">📜 결과</div>
+        <div id="winnerMedia" class="mediaH" style="max-width:min(70vw,900px)"></div>
+
+        <h2 id="profileTitle" class="title">당신의 연애 심리</h2>
+        <p id="profileDesc" class="desc">짧은 설명…</p>
+
+        <div id="profileTags" class="chips"></div>
+        <div id="axisBars" class="kpis"></div>
+
+        <div class="actions">
+          <button class="btn primary" id="btnAgain">다시 하기</button>
+          <button class="btn" id="btnShare">결과 공유</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    /* ===== 배경음 ===== */
+    const GAME_BGM = new Audio('./assets/audio/bgm_game.wav');
+    GAME_BGM.loop = true; GAME_BGM.volume = 0;
+    let gameBgmStarted = false;
+    function fadeTo(target=0.45, ms=1200){
+      const steps=20, step=(target-GAME_BGM.volume)/steps, dt=Math.max(16, ms/steps);
+      let i=0; const iv=setInterval(()=>{ i++; GAME_BGM.volume=Math.max(0,Math.min(1,GAME_BGM.volume+step)); if(i>=steps) clearInterval(iv)}, dt);
+    }
+    function startGameBGM(){ if(gameBgmStarted) return; gameBgmStarted=true; GAME_BGM.play().then(()=>fadeTo()).catch(()=>{}); }
+    document.addEventListener('DOMContentLoaded', ()=>{
+      GAME_BGM.play().then(()=>fadeTo()).catch(()=>['click','touchstart','keydown'].forEach(e=>addEventListener(e,startGameBGM,{once:true,passive:true})));
+    });
+    document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && gameBgmStarted && GAME_BGM.paused) GAME_BGM.play().catch(()=>{}); });
+
+    /* ===== 카드 데이터 (media만 사용) ===== */
+    const RAW_CARDS = [
+      {id:'S1', title:'솔직 직설 화법',    tags:['직접'],             media:'./assets/video/S1.mp4'},
+      {id:'S2', title:'개인시간 중요',      tags:['분리'],             media:'./assets/video/S2.mp4'},
+      {id:'S3', title:'즉석 바다 드라이브', tags:['자극','즉흥'],      media:'./assets/video/S3.mp4'},
+      {id:'S4', title:'하루 한 통 필수',    tags:['함께','말로'],      media:'./assets/video/S4.mp4'},
+      {id:'S5', title:'이벤트는 크게!',     tags:['행동','안정'],      media:'./assets/video/S5.mp4'},
+      {id:'S6', title:'연락 잦게',          tags:['함께','직접'],      media:'./assets/video/S6.mp4'},
+      {id:'S7', title:'타협안 먼저 제시',   tags:['문제해결'],         media:'./assets/video/S7.mp4'},
+      {id:'S8', title:'신상 미식 탐방',     tags:['자극'],             media:'./assets/video/S8.mp4'},
+
+      {id:'C1', title:'약속 철저 플래너',     tags:['안정','계획'],      media:'./assets/video/C1.mp4'},
+      {id:'C2', title:'즉흥 에너지 뿜뿜',     tags:['자극','즉흥'],      media:'./assets/video/C2.mp4'},
+      {id:'C3', title:'솔루션 제시형',        tags:['문제해결','직접'],  media:'./assets/video/C3.mp4'},
+      {id:'C4', title:'분위기 배려파',        tags:['배려','함께'],      media:'./assets/video/C4.mp4'},
+      {id:'C5', title:'개인시간 중요',        tags:['분리'],             media:'./assets/video/C5.mp4'},
+      {id:'C6', title:'행동으로 보여줌',      tags:['행동'],             media:'./assets/video/C6.mp4'},
+      {id:'C7', title:'말로 확인받고 싶음',   tags:['말로'],             media:'./assets/video/C7.mp4'},
+      {id:'C8', title:'솔루션 제시형',        tags:['문제해결','직접'],  media:'./assets/video/C8.mp4'},
+    ];
+
+    // 포스터 자동 유추: /video/xxx.mp4 → /video/poster/xxx.jpg
+    const POSTER_FALLBACK = './assets/bg/bg_4k.jpg';
+    const CARDS_16 = RAW_CARDS.map(c=>{
+      const poster = c.media.replace(/\/video\/(.+?)\.mp4$/i, '/video/poster/$1.jpg');
+      return {...c, poster};
+    });
+
+    /* ===== 유틸/상태 ===== */
+    const $ = s => document.querySelector(s);
+    const $$ = s => Array.from(document.querySelectorAll(s));
+    const shuffle = a => { for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]] } return a; };
+
+    let bracket=[], queue=[], next=[], history=[], played=0, winner=null, picking=false;
+    const totalMatches = CARDS_16.length - 1; // 16강 전체 매치수 = 15
+    const setView = v => document.body.setAttribute('data-view', v);
+
+    function hearts(x,y,count=6){
+      for(let i=0;i<count;i++){
+        const el=document.createElement('div');
+        el.className='heart';
+        el.textContent=['💖','💗','💞','💓'][i%4];
+        el.style.left=(x+(Math.random()*36-18))+'px';
+        el.style.top=(y+(Math.random()*16-8))+'px';
+        el.style.fontSize=(14+Math.random()*8)+'px';
+        document.body.appendChild(el);
+        setTimeout(()=>el.remove(),900);
+      }
+    }
+
+    function roundName(n){ return n>=16?'16강':n>=8?'8강':n>=4?'4강':n===2?'결승':''; }
+    function updateRoundTag(){
+      const name = roundName(bracket.length);
+      const suffix = queue.length===Math.ceil(bracket.length/2) ? ' 시작' : ' 진행';
+      $('#roundTag').textContent = `💘 ${name}${suffix}`;
+    }
+
+    function updateProgress(){
+      const pct = Math.min(100, Math.round((played/totalMatches)*100));
+      $('#bar').style.width = pct + '%';
+      $('#bartext').textContent = `${played} / ${totalMatches}`;
+    }
+
+    function mediaTag(src, poster){
+      return `<video src="${src}" poster="${poster}" autoplay muted loop playsinline preload="metadata"
+                disablepictureinpicture controlslist="nodownload noplaybackrate noremoteplayback nofullscreen"></video>`;
+    }
+
+    const seedPairs = arr => { const s=shuffle([...arr]); const pairs=[]; for(let i=0;i<s.length;i+=2){ pairs.push([s[i], s[i+1]]);} return pairs; };
+
+    function start(){
+      bracket = shuffle([...CARDS_16]);
+      queue = seedPairs(bracket);
+      next = []; history=[]; played=0; winner=null; picking=false;
+      setView('game'); updateRoundTag(); updateProgress(); renderPair();
+    }
+
+    function renderPair(){
+      const root = $('#pair'); root.innerHTML='';
+      if(queue.length===0){
+        if(next.length===1){ winner=next[0]; return spotlight(); }
+        bracket = next; next=[]; queue = seedPairs(bracket);
+        updateRoundTag(); return renderPair();
+      }
+      const [a,b]=queue[0];
+      const make = (card,side)=>{
+        const btn=document.createElement('button'); btn.className='candidate';
+        const poster = card.poster || POSTER_FALLBACK;
+        btn.innerHTML = `
+          <div class="mediaV">
+            ${mediaTag(card.media, poster)}
+          </div>
+          <div class="label">
+            <span class="name">${card.title}</span>
+            <span class="seed">${side==='L'?'← [A]':'→ [D]'}</span>
+          </div>`;
+        btn.addEventListener('click',e=>pick(card,a,b,e));
+        return btn;
+      };
+      root.appendChild(make(a,'L')); root.appendChild(make(b,'R'));
+    }
+
+    function pick(chosen,left,right,evt){
+      if(picking) return; picking=true;
+      const card = evt?.currentTarget; card?.classList.add('pop');
+      const r = card?.getBoundingClientRect?.();
+      hearts((r?.left||evt.clientX)+r.width/2, (r?.top||evt.clientY)+r.height/2-20, 8);
+      setTimeout(()=>card?.classList.remove('pop'),220);
+
+      next.push(chosen); queue.shift(); played++;
+      updateProgress();
+      history.push({left:left.id,right:right.id,pick:chosen.id,round:bracket.length});
+      renderPair(); setTimeout(()=>picking=false,90);
+    }
+
+    function calcProfile(){
+      const AXES = ['안정','자극','직접','배려','계획','즉흥','분리','함께','문제해결','쿨다운','말로','행동'];
+      const score = Object.fromEntries(AXES.map(a=>[a,0]));
+      winner.tags?.forEach(t=> score[t]=(score[t]||0)+3);
+      const tail=history.slice(-3);
+      for(const m of tail){
+        const opp=[m.left,m.right].find(id=>id!==m.pick);
+        const oppCard=CARDS_16.find(c=>c.id===opp);
+        oppCard?.tags?.forEach(t=> score[t]+= (m.round===2?1:0.5));
+      }
+      return Object.entries(score).sort((a,b)=>b[1]-a[1]).slice(0,3);
+    }
+
+    function spotlight(){
+      $('#pair').innerHTML='';
+      $('#bar').style.width='100%';
+      $('#bartext').textContent=`${totalMatches} / ${totalMatches}`;
+      $('#roundTag').textContent='🏆 우승 확정';
+
+      const poster = winner.poster || POSTER_FALLBACK;
+      $('#spotMedia').innerHTML = `<video src="${winner.media}" poster="${poster}" autoplay muted loop playsinline preload="metadata"></video>`;
+
+      setView('spot'); countdown(3, showResult);
+    }
+
+    function profileText(top3){
+      const keys = top3.map(([k])=>k);
+      const name = (keys.includes('안정')&&keys.includes('계획'))?'믿음직 플래너'
+                 : (keys.includes('자극')&&keys.includes('즉흥'))?'스파클러'
+                 : (keys.includes('직접')&&keys.includes('문제해결'))?'솔루션 드리블러'
+                 : '마이 페이스 러버';
+      const desc = {
+        '믿음직 플래너':'약속과 루틴이 편안함을 줘요. 계획 공유하면 애정도↑',
+        '스파클러':'새로움에 반짝! 즉석 제안, 작은 모험에 설렘을 느껴요.',
+        '솔루션 드리블러':'돌려 말하는 것보다 바로 해결! 상황을 두고 대화하는 편.',
+        '마이 페이스 러버':'무리하지 않고 내 템포로. 오래 편안한 관계를 추구해요.'
+      }[name];
+      return {name, desc};
+    }
+
+    function showResult(){
+      const top3=calcProfile(); const {name,desc}=profileText(top3);
+      const poster = winner.poster || POSTER_FALLBACK;
+      $('#winnerMedia').innerHTML = `<video src="${winner.media}" poster="${poster}" autoplay muted loop playsinline preload="metadata"></video>`;
+      $('#profileTitle').textContent=`당신은 «${name}» 타입`;
+      $('#profileDesc').textContent=desc;
+
+      // 태그 칩
+      $('#profileTags').innerHTML=(winner.tags||[]).map(t=>`<span class="tag">#${t}</span>`).join('');
+
+      // KPI 바(퍼센트 + 애니메이션)
+      const rows = top3.map(([k,v])=>{
+        const pct = Math.min(100, Math.round((v/4.5)*100));
+        return `
+          <div class="krow">
+            <div class="kname">${k}</div>
+            <div class="meter"><div class="fill" style="width:0%" data-target="${pct}"></div></div>
+            <div class="kval">0%</div>
+          </div>`;
+      }).join('');
+      $('#axisBars').innerHTML = rows;
+
+      // 애니메이션
+      $$('#axisBars .krow').forEach(row=>{
+        const fill=row.querySelector('.fill'); const to=+fill.dataset.target;
+        const val=row.querySelector('.kval'); const start=performance.now(); const dur=750;
+        function step(t){
+          const p=Math.min(1,(t-start)/dur); const v=Math.round(to*p);
+          fill.style.width = v+'%'; val.textContent=v+'%';
+          if(p<1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+      });
+
+      setView('result');
+    }
+
+    function countdown(sec,done){
+      const el=$('#count'); let t=sec; el.textContent=`(${t}s)`;
+      const iv=setInterval(()=>{ t--; el.textContent=`(${t}s)`; if(t<=0){clearInterval(iv); el.textContent=''; done();}},1000);
+    }
+
+    /* 이벤트 */
+    function shareNow(){
+      const url=new URL(location.href); if(winner) url.searchParams.set('winner', winner.id);
+      const shareUrl=url.toString();
+      (async ()=>{
+        try{
+          if(navigator.share){ await navigator.share({title:'연애 심리 월드컵', url:shareUrl}); }
+          else { await navigator.clipboard.writeText(shareUrl); alert('링크 복사 완료'); }
+        }catch(e){ prompt('아래 링크를 복사하세요', shareUrl); }
+      })();
+    }
+
+    $('#btnHome').addEventListener('click', ()=> location.href='start.html');
+    $('#btnAgain').addEventListener('click', start);
+    $('#btnShare').addEventListener('click', shareNow);
+
+    window.addEventListener('keydown', (e)=>{
+      if(document.body.getAttribute('data-view')!=='game') return;
+      const [L,R] = $$('#pair .candidate'); if(!L||!R) return;
+      if(['ArrowLeft','a','A','Enter'].includes(e.key)) L.click();
+      if(['ArrowRight','d','D'].includes(e.key)) R.click();
+    });
+
+    document.addEventListener('DOMContentLoaded', start);
+  </script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+# OS/IDE 잡파일
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# 빌드 산출물(없으면 생략)
+dist/
