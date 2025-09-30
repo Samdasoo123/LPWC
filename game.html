@@ -168,11 +168,11 @@
 </head>
 <body data-view="game">
   <header>
-    <a class="brand" href="start.html" aria-label="연애 심리 월드컵 홈으로">
+    <!-- 홈 이동은 항상 상대경로 ./ 로 (index.html) -->
+    <a class="brand" href="./" aria-label="연애 심리 월드컵 홈으로">
       <img src="./assets/logo/logo_main_kr.png" alt="연애 심리 월드컵 로고(작게)">
     </a>
     <div>
-      <!-- 상단 공유 버튼 제거 -->
       <button class="btn" id="btnHome">타이틀로</button>
     </div>
   </header>
@@ -444,9 +444,10 @@
       })();
     }
 
-    $('#btnHome').addEventListener('click', ()=> location.href='start.html');
-    $('#btnAgain').addEventListener('click', start);
-    $('#btnShare').addEventListener('click', shareNow);
+    // ✅ 홈 이동은 항상 ./ 로 (index.html)
+    document.getElementById('btnHome').addEventListener('click', ()=> location.assign('./'));
+    document.getElementById('btnAgain').addEventListener('click', start);
+    document.getElementById('btnShare').addEventListener('click', shareNow);
 
     window.addEventListener('keydown', (e)=>{
       if(document.body.getAttribute('data-view')!=='game') return;
