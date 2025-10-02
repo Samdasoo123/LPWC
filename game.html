@@ -9,6 +9,11 @@
   <link rel="preload" as="image" href="./assets/bg/bg_4k.jpg">
   <link rel="preload" as="image" href="./assets/logo/logo_main_kr.png">
   <link rel="preload" as="audio" href="./assets/audio/bgm_game.wav">
+  <link rel="preload" as="video" href="./assets/video/S1.mp4">
+  <link rel="preload" as="image" href="./assets/video/poster/S1.jpg">
+
+  <!-- Kakao JS SDK (카카오 버튼 쓰려면 사용 / 앱키 필요) -->
+  <script src="https://developers.kakao.com/sdk/js/kakao.min.js" defer></script>
 
   <style>
     :root{
@@ -18,6 +23,7 @@
       --bar-grad:linear-gradient(90deg,#ff9ad0,#ffd2a4,#8ef0d0,#b7a9ff);
       --bar-stripe:repeating-linear-gradient(45deg, rgba(255,255,255,.45) 0 10px, rgba(255,255,255,0) 10px 20px);
       --accent:#ff5fa6;
+      --pill:#ffe3f0;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -65,10 +71,11 @@
       box-shadow:0 12px 28px rgba(255,133,192,.25), 0 2px 10px rgba(17,12,46,.08) inset;
       border-color:rgba(255,133,192,.75);
     }
+    .btn.primary{background:linear-gradient(180deg,#ffe1f0,#ffd4ea); border-color:rgba(255,133,192,.7); color:#101621}
 
     .muted{color:var(--muted)} .small{font-size:12px}
 
-    /* 아레나 카드 */
+    /* 아레나 */
     .arena{
       background:var(--glass);
       border:1px solid var(--line);
@@ -107,7 +114,7 @@
     .mediaV{ position:relative; width:100%; aspect-ratio:9/16; height:auto; max-height:78vh; border-radius:inherit; overflow:hidden; background:#fff1f7; }
     .mediaV>*{ width:100%; height:100%; object-fit:cover; object-position:center top; display:block; }
 
-    /* Spotlight/Result 미디어(가로 16:9 + 오버레이) */
+    /* Spotlight/Result 공통 미디어(가로 16:9 + 오버레이) */
     .mediaH{
       position:relative;
       max-width:min(60vw, 820px); width:100%; height:auto; aspect-ratio:16/9;
@@ -134,13 +141,14 @@
     body[data-view="spot"]   #screen-spot{display:block !important}
     body[data-view="result"] #screen-result{display:block !important}
 
-    /* ===== 결과 화면 (가운데 정렬 스타일 포함) ===== */
+    /* ===== 결과 화면 ===== */
     .panel{ background:var(--glass); border:1px solid var(--line); border-radius:24px; padding:20px; backdrop-filter: blur(14px) saturate(130%); box-shadow: var(--shadow); }
     .panel.result{
       padding:28px 22px;
       background:linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.6));
       border:1px solid rgba(255,133,192,.45);
-      display:grid; place-items:center; text-align:center; gap:14px;
+      max-width: 1000px;
+      margin: 0 auto;
     }
     .title{
       margin:12px 0 8px; font-size:28px; line-height:1.25; font-weight:900; letter-spacing:.01em;
@@ -158,7 +166,31 @@
     .kval{font-weight:900; color:#0f1a26; text-align:left}
 
     .actions{display:flex; gap:10px; justify-content:center; margin-top:6px; flex-wrap:wrap}
-    .btn.primary{background:linear-gradient(180deg,#ffe1f0,#ffd4ea); border-color:rgba(255,133,192,.7); color:#101621}
+
+    /* ===== 공유 시트 ===== */
+    .share-mask{
+      position:fixed; inset:0; background:rgba(0,0,0,.35); display:none; z-index:99;
+    }
+    .share-sheet{
+      position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
+      width:min(560px, 92vw); background:linear-gradient(180deg,#fff,#fff6fb);
+      border:1px solid var(--line); border-radius:18px; box-shadow: var(--shadow); padding:16px; z-index:100; display:none;
+    }
+    .share-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+    .share-title{font-weight:900}
+    .share-grid{
+      display:grid; grid-template-columns:repeat(5, 1fr); gap:10px; padding:4px 2px;
+    }
+    .share-btn{
+      display:flex; flex-direction:column; align-items:center; gap:8px; padding:12px 6px;
+      border:1px solid var(--line); border-radius:14px; background:var(--pill); cursor:pointer;
+      transition:transform .06s ease, border-color .15s;
+    }
+    .share-btn:hover{ transform:translateY(-2px); border-color:#ff9ad0; }
+    .share-ico{font-size:24px; line-height:1}
+    .share-label{font-size:12px; font-weight:800; color:#333}
+    .share-foot{display:flex; justify-content:flex-end; margin-top:12px}
+    .share-close{background:#fff; border:1px solid var(--line)}
 
     /* 하트 */
     .heart{ position:fixed; pointer-events:none; z-index:9999; font-size:16px; animation: float 900ms ease forwards; filter: drop-shadow(0 4px 8px rgba(255,105,180,.35)); }
@@ -190,7 +222,7 @@
 
     <!-- Spotlight -->
     <section id="screen-spot">
-      <div class="panel" style="display:grid;place-items:center;text-align:center;gap:10px">
+      <div class="panel center">
         <div class="tag">🏆 최종 우승</div>
         <h2 class="title">우승자를 소개합니다! <span id="count" class="small muted"></span></h2>
         <div id="spotMedia" class="mediaH"></div>
@@ -200,7 +232,7 @@
 
     <!-- Result -->
     <section id="screen-result">
-      <div class="panel result">
+      <div class="panel result center">
         <div class="tag">📜 결과</div>
         <div id="winnerMedia" class="mediaH" style="max-width:min(70vw,900px)"></div>
 
@@ -218,7 +250,39 @@
     </section>
   </main>
 
+  <!-- ===== 공유 시트 (5개 버튼) ===== -->
+  <div id="shareMask" class="share-mask"></div>
+  <div id="shareSheet" class="share-sheet" role="dialog" aria-modal="true" aria-labelledby="shareTitle">
+    <div class="share-head">
+      <div id="shareTitle" class="share-title">결과 공유</div>
+      <button class="btn share-close" id="shareClose">닫기</button>
+    </div>
+    <div class="share-grid">
+      <button class="share-btn" id="share-kakao"   aria-label="카카오톡">
+        <div class="share-ico">🟡</div><div class="share-label">카카오톡</div>
+      </button>
+      <button class="share-btn" id="share-instagram" aria-label="인스타그램">
+        <div class="share-ico">📷</div><div class="share-label">인스타</div>
+      </button>
+      <button class="share-btn" id="share-twitter" aria-label="트위터">
+        <div class="share-ico">𝕏</div><div class="share-label">트위터</div>
+      </button>
+      <button class="share-btn" id="share-facebook" aria-label="페이스북">
+        <div class="share-ico">f</div><div class="share-label">페이스북</div>
+      </button>
+      <button class="share-btn" id="share-linkedin" aria-label="링크드인">
+        <div class="share-ico">in</div><div class="share-label">링크드인</div>
+      </button>
+    </div>
+    <div class="share-foot">
+      <button class="btn share-close" id="shareCopy">링크 복사</button>
+    </div>
+  </div>
+
   <script>
+    /* ===== 설정: Kakao 앱키 (있으면 입력, 없으면 빈 문자열) ===== */
+    const KAKAO_APP_KEY = ""; // 예: "0a1b2c3d4e5f6g7h8i9j0k..."
+
     /* ===== 배경음 ===== */
     const GAME_BGM = new Audio('./assets/audio/bgm_game.wav');
     GAME_BGM.loop = true; GAME_BGM.volume = 0;
@@ -233,50 +297,46 @@
     });
     document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && gameBgmStarted && GAME_BGM.paused) GAME_BGM.play().catch(()=>{}); });
 
-    /* ===== 카드 데이터 (세로/가로 분리) =====
-       - portrait(세로): ./assets/video/<ID>.mp4
-       - landscape(가로): ./assets/video_wide/<ID>.mp4
-       - 포스터도 동일 규칙의 poster 폴더
-    */
-    const RAW = [
-      {id:'S1', title:'솔직 직설 화법',    tags:['직접']},
-      {id:'S2', title:'개인시간 중요',      tags:['분리']},
-      {id:'S3', title:'즉석 바다 드라이브', tags:['자극','즉흥']},
-      {id:'S4', title:'하루 한 통 필수',    tags:['함께','말로']},
-      {id:'S5', title:'이벤트는 크게!',     tags:['행동','안정']},
-      {id:'S6', title:'연락 잦게',          tags:['함께','직접']},
-      {id:'S7', title:'타협안 먼저 제시',   tags:['문제해결']},
-      {id:'S8', title:'신상 미식 탐방',     tags:['자극']},
-      {id:'C1', title:'약속 철저 플래너',     tags:['안정','계획']},
-      {id:'C2', title:'즉흥 에너지 뿜뿜',     tags:['자극','즉흥']},
-      {id:'C3', title:'솔루션 제시형',        tags:['문제해결','직접']},
-      {id:'C4', title:'분위기 배려파',        tags:['배려','함께']},
-      {id:'C5', title:'개인시간 중요',        tags:['분리']},
-      {id:'C6', title:'행동으로 보여줌',      tags:['행동']},
-      {id:'C7', title:'말로 확인받고 싶음',   tags:['말로']},
-      {id:'C8', title:'솔루션 제시형',        tags:['문제해결','직접']},
+    /* ===== 카드 데이터 ===== */
+    const RAW_CARDS = [
+      {id:'S1', title:'솔직 직설 화법',    tags:['직접'],             media:'./assets/video/S1.mp4'},
+      {id:'S2', title:'개인시간 중요',      tags:['분리'],             media:'./assets/video/S2.mp4'},
+      {id:'S3', title:'즉석 바다 드라이브', tags:['자극','즉흥'],      media:'./assets/video/S3.mp4'},
+      {id:'S4', title:'하루 한 통 필수',    tags:['함께','말로'],      media:'./assets/video/S4.mp4'},
+      {id:'S5', title:'이벤트는 크게!',     tags:['행동','안정'],      media:'./assets/video/S5.mp4'},
+      {id:'S6', title:'연락 잦게',          tags:['함께','직접'],      media:'./assets/video/S6.mp4'},
+      {id:'S7', title:'타협안 먼저 제시',   tags:['문제해결'],         media:'./assets/video/S7.mp4'},
+      {id:'S8', title:'신상 미식 탐방',     tags:['자극'],             media:'./assets/video/S8.mp4'},
+      {id:'C1', title:'약속 철저 플래너',     tags:['안정','계획'],      media:'./assets/video/C1.mp4'},
+      {id:'C2', title:'즉흥 에너지 뿜뿜',     tags:['자극','즉흥'],      media:'./assets/video/C2.mp4'},
+      {id:'C3', title:'솔루션 제시형',        tags:['문제해결','직접'],  media:'./assets/video/C3.mp4'},
+      {id:'C4', title:'분위기 배려파',        tags:['배려','함께'],      media:'./assets/video/C4.mp4'},
+      {id:'C5', title:'개인시간 중요',        tags:['분리'],             media:'./assets/video/C5.mp4'},
+      {id:'C6', title:'행동으로 보여줌',      tags:['행동'],             media:'./assets/video/C6.mp4'},
+      {id:'C7', title:'말로 확인받고 싶음',   tags:['말로'],             media:'./assets/video/C7.mp4'},
+      {id:'C8', title:'솔루션 제시형',        tags:['문제해결','직접'],  media:'./assets/video/C8.mp4'},
     ];
 
-    // 경로 생성 유틸(세로 / 가로 / 포스터)
-    const vPortrait = id => `./assets/video/${id}.mp4`;
-    const vLandscape = id => `./assets/video_wide/${id}.mp4`;
-    const pPortrait = id => `./assets/video/poster/${id}.jpg`;
-    const pLandscape = id => `./assets/video_wide/poster/${id}.jpg`;
+    // 포스터 자동 유추: /video/xxx.mp4 → /video/poster/xxx.jpg
     const POSTER_FALLBACK = './assets/bg/bg_4k.jpg';
+    const CARDS_16 = RAW_CARDS.map(c=>{
+      const poster = c.media.replace(/\/video\/(.+?)\.mp4$/i, '/video/poster/$1.jpg');
+      return {...c, poster};
+    });
 
-    // 최종 카드: 세로용 mediaV, 가로용 mediaH(spot/result 전용)
-    const CARDS_16 = RAW.map(c => ({
-      ...c,
-      mediaV: vPortrait(c.id),
-      mediaH: vLandscape(c.id),         // spotlight/result 우선 사용
-      posterV: pPortrait(c.id),
-      posterH: pLandscape(c.id)
-    }));
-
-    /* ===== 유틸/상태 ===== */
+    /* ===== 공통 유틸 ===== */
     const $ = s => document.querySelector(s);
     const $$ = s => Array.from(document.querySelectorAll(s));
     const shuffle = a => { for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]] } return a; };
+    const openCentered = (url, w=640, h=700) => {
+      const y = window.top.outerHeight/2 + window.top.screenY - ( h/2);
+      const x = window.top.outerWidth/2  + window.top.screenX - ( w/2);
+      window.open(url, '_blank', `popup=yes,toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=${w},height=${h},top=${y},left=${x}`);
+    };
+    async function copyToClipboard(text){
+      try{ await navigator.clipboard.writeText(text); alert('링크 복사 완료'); }
+      catch(e){ prompt('아래 링크를 복사하세요', text); }
+    }
 
     let bracket=[], queue=[], next=[], history=[], played=0, winner=null, picking=false;
     const totalMatches = CARDS_16.length - 1; // 16강 전체 매치수 = 15
@@ -301,33 +361,14 @@
       const suffix = queue.length===Math.ceil(bracket.length/2) ? ' 시작' : ' 진행';
       $('#roundTag').textContent = `💘 ${name}${suffix}`;
     }
-
     function updateProgress(){
       const pct = Math.min(100, Math.round((played/totalMatches)*100));
       $('#bar').style.width = pct + '%';
       $('#bartext').textContent = `${played} / ${totalMatches}`;
     }
-
-    // 비디오 태그 생성기
-    function videoV(srcV, posterV){
-      return `
-        <video autoplay muted loop playsinline preload="metadata"
-               poster="${posterV}" disablepictureinpicture
-               controlslist="nodownload noplaybackrate noremoteplayback nofullscreen">
-          <source src="${srcV}" type="video/mp4">
-        </video>`;
-    }
-
-    // 가로(우선) → 세로(폴백) 순으로 소스 2개 제공
-    function videoH(srcH, srcV, posterH, posterV){
-      const poster = posterH || posterV || POSTER_FALLBACK;
-      return `
-        <video autoplay muted loop playsinline preload="metadata"
-               poster="${poster}" disablepictureinpicture
-               controlslist="nodownload noplaybackrate noremoteplayback nofullscreen">
-          <source src="${srcH}" type="video/mp4">
-          <source src="${srcV}" type="video/mp4">
-        </video>`;
+    function mediaTag(src, poster){
+      return `<video src="${src}" poster="${poster}" autoplay muted loop playsinline preload="metadata"
+                disablepictureinpicture controlslist="nodownload noplaybackrate noremoteplayback nofullscreen"></video>`;
     }
 
     const seedPairs = arr => { const s=shuffle([...arr]); const pairs=[]; for(let i=0;i<s.length;i+=2){ pairs.push([s[i], s[i+1]]);} return pairs; };
@@ -349,10 +390,10 @@
       const [a,b]=queue[0];
       const make = (card,side)=>{
         const btn=document.createElement('button'); btn.className='candidate';
-        const posterV = card.posterV || POSTER_FALLBACK;
+        const poster = card.poster || POSTER_FALLBACK;
         btn.innerHTML = `
           <div class="mediaV">
-            ${videoV(card.mediaV, posterV)}
+            ${mediaTag(card.media, poster)}
           </div>
           <div class="label">
             <span class="name">${card.title}</span>
@@ -396,11 +437,8 @@
       $('#bartext').textContent=`${totalMatches} / ${totalMatches}`;
       $('#roundTag').textContent='🏆 우승 확정';
 
-      // 우승자 가로 우선 / 세로 폴백
-      $('#spotMedia').innerHTML = videoH(
-        winner.mediaH, winner.mediaV,
-        winner.posterH, winner.posterV
-      );
+      const poster = winner.poster || POSTER_FALLBACK;
+      $('#spotMedia').innerHTML = `<video src="${winner.media}" poster="${poster}" autoplay muted loop playsinline preload="metadata"></video>`;
 
       setView('spot'); countdown(3, showResult);
     }
@@ -422,10 +460,8 @@
 
     function showResult(){
       const top3=calcProfile(); const {name,desc}=profileText(top3);
-      $('#winnerMedia').innerHTML = videoH(
-        winner.mediaH, winner.mediaV,
-        winner.posterH, winner.posterV
-      );
+      const poster = winner.poster || POSTER_FALLBACK;
+      $('#winnerMedia').innerHTML = `<video src="${winner.media}" poster="${poster}" autoplay muted loop playsinline preload="metadata"></video>`;
       $('#profileTitle').textContent=`당신은 «${name}» 타입`;
       $('#profileDesc').textContent=desc;
 
@@ -464,21 +500,91 @@
       const iv=setInterval(()=>{ t--; el.textContent=`(${t}s)`; if(t<=0){clearInterval(iv); el.textContent=''; done();}},1000);
     }
 
-    /* 이벤트 */
-    function shareNow(){
-      const url=new URL(location.href); if(winner) url.searchParams.set('winner', winner.id);
-      const shareUrl=url.toString();
-      (async ()=>{
-        try{
-          if(navigator.share){ await navigator.share({title:'연애 심리 월드컵', url:shareUrl}); }
-          else { await navigator.clipboard.writeText(shareUrl); alert('링크 복사 완료'); }
-        }catch(e){ prompt('아래 링크를 복사하세요', shareUrl); }
-      })();
+    /* ===== 공유 시트 로직 ===== */
+    const shareMask  = $('#shareMask');
+    const shareSheet = $('#shareSheet');
+    const shareOpen  = () => { shareMask.style.display='block'; shareSheet.style.display='block'; };
+    const shareClose = () => { shareMask.style.display='none';  shareSheet.style.display='none';  };
+    $('#shareClose').addEventListener('click', shareClose);
+    shareMask.addEventListener('click', shareClose);
+
+    function currentShareUrl(){
+      const url = new URL(location.href);
+      if(winner) url.searchParams.set('winner', winner.id);
+      return url.toString();
     }
 
+    function initKakao(){
+      if(!KAKAO_APP_KEY) return false;
+      if(!window.Kakao)  return false;
+      try{
+        if(!window.Kakao.isInitialized()) window.Kakao.init(KAKAO_APP_KEY);
+        return true;
+      }catch(e){ return false; }
+    }
+
+    function shareKakao(){
+      const ok = initKakao();
+      const shareUrl = currentShareUrl();
+      const poster   = winner?.poster || POSTER_FALLBACK;
+      const title    = '연애 심리 월드컵 결과';
+      const desc     = $('#profileTitle')?.textContent || '나의 연애 심리를 확인해보세요!';
+      if(ok){
+        try{
+          window.Kakao.Share.sendDefault({
+            objectType: 'feed',
+            content: {
+              title: title,
+              description: desc,
+              imageUrl: new URL(poster, location.href).toString(),
+              link: { mobileWebUrl: shareUrl, webUrl: shareUrl }
+            },
+            buttons: [{ title:'결과 보기', link:{ mobileWebUrl: shareUrl, webUrl: shareUrl }}]
+          });
+          return;
+        }catch(e){}
+      }
+      copyToClipboard(shareUrl); // 폴백
+    }
+
+    function shareInstagram(){
+      const shareUrl = currentShareUrl();
+      // 모바일/지원환경에서 Web Share API 시도
+      if(navigator.share){
+        navigator.share({ title:'연애 심리 월드컵', url: shareUrl }).catch(()=>copyToClipboard(shareUrl));
+        return;
+      }
+      // 인스타그램은 웹 링크 공유가 제한적 → 링크 복사 후 인스타 열기
+      copyToClipboard(shareUrl);
+      openCentered('https://instagram.com/', 1000, 800);
+    }
+
+    function shareTwitter(){
+      const shareUrl = encodeURIComponent(currentShareUrl());
+      const text = encodeURIComponent('연애 심리 월드컵 결과');
+      openCentered(`https://twitter.com/intent/tweet?url=${shareUrl}&text=${text}`);
+    }
+    function shareFacebook(){
+      const shareUrl = encodeURIComponent(currentShareUrl());
+      openCentered(`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`);
+    }
+    function shareLinkedIn(){
+      const shareUrl = encodeURIComponent(currentShareUrl());
+      const title = encodeURIComponent('연애 심리 월드컵 결과');
+      openCentered(`https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}&title=${title}`);
+    }
+
+    $('#btnShare').addEventListener('click', shareOpen);
+    $('#shareCopy').addEventListener('click', ()=>copyToClipboard(currentShareUrl()));
+    $('#share-kakao').addEventListener('click', shareKakao);
+    $('#share-instagram').addEventListener('click', shareInstagram);
+    $('#share-twitter').addEventListener('click', shareTwitter);
+    $('#share-facebook').addEventListener('click', shareFacebook);
+    $('#share-linkedin').addEventListener('click', shareLinkedIn);
+
+    /* 기타 이벤트 */
     $('#btnHome').addEventListener('click', ()=> location.href='index.html');
     $('#btnAgain').addEventListener('click', start);
-    $('#btnShare').addEventListener('click', shareNow);
 
     window.addEventListener('keydown', (e)=>{
       if(document.body.getAttribute('data-view')!=='game') return;
