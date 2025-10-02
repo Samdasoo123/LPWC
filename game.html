@@ -9,8 +9,6 @@
   <link rel="preload" as="image" href="./assets/bg/bg_4k.jpg">
   <link rel="preload" as="image" href="./assets/logo/logo_main_kr.png">
   <link rel="preload" as="audio" href="./assets/audio/bgm_game.wav">
-  <link rel="preload" as="video" href="./assets/video/S1.mp4">
-  <link rel="preload" as="image" href="./assets/video/poster/S1.jpg">
 
   <style>
     :root{
@@ -69,7 +67,6 @@
     }
 
     .muted{color:var(--muted)} .small{font-size:12px}
-    .center{display:grid; place-items:center; text-align:center; gap:12px}
 
     /* 아레나 카드 */
     .arena{
@@ -110,20 +107,12 @@
     .mediaV{ position:relative; width:100%; aspect-ratio:9/16; height:auto; max-height:78vh; border-radius:inherit; overflow:hidden; background:#fff1f7; }
     .mediaV>*{ width:100%; height:100%; object-fit:cover; object-position:center top; display:block; }
 
-    /* (모바일 가로) 한 화면에 두 카드 보이도록 */
-    @media (orientation: landscape) and (max-height: 480px){
-      .pair{ grid-template-columns:repeat(2, minmax(0, 48vh)); gap:12px; }
-      .mediaV{ aspect-ratio:auto; height:72vh; }
-      .mediaV>*{ object-fit:contain; object-position:center; }
-    }
-
-    /* Spotlight/Result 공통 미디어(가로 16:9 + 오버레이) */
+    /* Spotlight/Result 미디어(가로 16:9 + 오버레이) */
     .mediaH{
       position:relative;
       max-width:min(60vw, 820px); width:100%; height:auto; aspect-ratio:16/9;
       border-radius:20px; overflow:hidden; border:1px solid var(--line); background:#fff1f7;
       box-shadow:0 10px 30px rgba(0,0,0,.12);
-      margin:0 auto;                 /* 가운데 */
     }
     .mediaH::after{
       content:""; position:absolute; inset:0;
@@ -140,20 +129,18 @@
     .tag{ display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line); background:rgba(255,255,255,.92);
       border-radius:999px; padding:5px 12px; font-size:12px; color:var(--accent); box-shadow: var(--shadow); font-weight:800; }
 
-    /* 화면 전환 */
     main>section{display:none !important}
     body[data-view="game"]   #screen-game{display:block !important}
     body[data-view="spot"]   #screen-spot{display:block !important}
-    body[data-view="result"] #screen-result{display:grid !important; place-items:center;}  /* 결과 섹션 자체를 중앙 */
+    body[data-view="result"] #screen-result{display:block !important}
 
-    /* ===== 결과 화면 강화 & 가운데 정렬 ===== */
+    /* ===== 결과 화면 (가운데 정렬 스타일 포함) ===== */
     .panel{ background:var(--glass); border:1px solid var(--line); border-radius:24px; padding:20px; backdrop-filter: blur(14px) saturate(130%); box-shadow: var(--shadow); }
     .panel.result{
       padding:28px 22px;
       background:linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.6));
       border:1px solid rgba(255,133,192,.45);
-      max-width:980px;        /* 폭 제한 */
-      margin:0 auto;          /* 가운데 */
+      display:grid; place-items:center; text-align:center; gap:14px;
     }
     .title{
       margin:12px 0 8px; font-size:28px; line-height:1.25; font-weight:900; letter-spacing:.01em;
@@ -180,7 +167,7 @@
 </head>
 <body data-view="game">
   <header>
-    <a class="brand" href="./" aria-label="연애 심리 월드컵 홈으로">
+    <a class="brand" href="index.html" aria-label="연애 심리 월드컵 홈으로">
       <img src="./assets/logo/logo_main_kr.png" alt="연애 심리 월드컵 로고(작게)">
     </a>
     <div>
@@ -203,7 +190,7 @@
 
     <!-- Spotlight -->
     <section id="screen-spot">
-      <div class="panel center">
+      <div class="panel" style="display:grid;place-items:center;text-align:center;gap:10px">
         <div class="tag">🏆 최종 우승</div>
         <h2 class="title">우승자를 소개합니다! <span id="count" class="small muted"></span></h2>
         <div id="spotMedia" class="mediaH"></div>
@@ -213,7 +200,7 @@
 
     <!-- Result -->
     <section id="screen-result">
-      <div class="panel result center">
+      <div class="panel result">
         <div class="tag">📜 결과</div>
         <div id="winnerMedia" class="mediaH" style="max-width:min(70vw,900px)"></div>
 
@@ -246,33 +233,45 @@
     });
     document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && gameBgmStarted && GAME_BGM.paused) GAME_BGM.play().catch(()=>{}); });
 
-    /* ===== 카드 데이터 ===== */
-    const RAW_CARDS = [
-      {id:'S1', title:'솔직 직설 화법',    tags:['직접'],             media:'./assets/video/S1.mp4'},
-      {id:'S2', title:'개인시간 중요',      tags:['분리'],             media:'./assets/video/S2.mp4'},
-      {id:'S3', title:'즉석 바다 드라이브', tags:['자극','즉흥'],      media:'./assets/video/S3.mp4'},
-      {id:'S4', title:'하루 한 통 필수',    tags:['함께','말로'],      media:'./assets/video/S4.mp4'},
-      {id:'S5', title:'이벤트는 크게!',     tags:['행동','안정'],      media:'./assets/video/S5.mp4'},
-      {id:'S6', title:'연락 잦게',          tags:['함께','직접'],      media:'./assets/video/S6.mp4'},
-      {id:'S7', title:'타협안 먼저 제시',   tags:['문제해결'],         media:'./assets/video/S7.mp4'},
-      {id:'S8', title:'신상 미식 탐방',     tags:['자극'],             media:'./assets/video/S8.mp4'},
-
-      {id:'C1', title:'약속 철저 플래너',     tags:['안정','계획'],      media:'./assets/video/C1.mp4'},
-      {id:'C2', title:'즉흥 에너지 뿜뿜',     tags:['자극','즉흥'],      media:'./assets/video/C2.mp4'},
-      {id:'C3', title:'솔루션 제시형',        tags:['문제해결','직접'],  media:'./assets/video/C3.mp4'},
-      {id:'C4', title:'분위기 배려파',        tags:['배려','함께'],      media:'./assets/video/C4.mp4'},
-      {id:'C5', title:'개인시간 중요',        tags:['분리'],             media:'./assets/video/C5.mp4'},
-      {id:'C6', title:'행동으로 보여줌',      tags:['행동'],             media:'./assets/video/C6.mp4'},
-      {id:'C7', title:'말로 확인받고 싶음',   tags:['말로'],             media:'./assets/video/C7.mp4'},
-      {id:'C8', title:'솔루션 제시형',        tags:['문제해결','직접'],  media:'./assets/video/C8.mp4'},
+    /* ===== 카드 데이터 (세로/가로 분리) =====
+       - portrait(세로): ./assets/video/<ID>.mp4
+       - landscape(가로): ./assets/video_wide/<ID>.mp4
+       - 포스터도 동일 규칙의 poster 폴더
+    */
+    const RAW = [
+      {id:'S1', title:'솔직 직설 화법',    tags:['직접']},
+      {id:'S2', title:'개인시간 중요',      tags:['분리']},
+      {id:'S3', title:'즉석 바다 드라이브', tags:['자극','즉흥']},
+      {id:'S4', title:'하루 한 통 필수',    tags:['함께','말로']},
+      {id:'S5', title:'이벤트는 크게!',     tags:['행동','안정']},
+      {id:'S6', title:'연락 잦게',          tags:['함께','직접']},
+      {id:'S7', title:'타협안 먼저 제시',   tags:['문제해결']},
+      {id:'S8', title:'신상 미식 탐방',     tags:['자극']},
+      {id:'C1', title:'약속 철저 플래너',     tags:['안정','계획']},
+      {id:'C2', title:'즉흥 에너지 뿜뿜',     tags:['자극','즉흥']},
+      {id:'C3', title:'솔루션 제시형',        tags:['문제해결','직접']},
+      {id:'C4', title:'분위기 배려파',        tags:['배려','함께']},
+      {id:'C5', title:'개인시간 중요',        tags:['분리']},
+      {id:'C6', title:'행동으로 보여줌',      tags:['행동']},
+      {id:'C7', title:'말로 확인받고 싶음',   tags:['말로']},
+      {id:'C8', title:'솔루션 제시형',        tags:['문제해결','직접']},
     ];
 
-    // 포스터 자동 유추
+    // 경로 생성 유틸(세로 / 가로 / 포스터)
+    const vPortrait = id => `./assets/video/${id}.mp4`;
+    const vLandscape = id => `./assets/video_wide/${id}.mp4`;
+    const pPortrait = id => `./assets/video/poster/${id}.jpg`;
+    const pLandscape = id => `./assets/video_wide/poster/${id}.jpg`;
     const POSTER_FALLBACK = './assets/bg/bg_4k.jpg';
-    const CARDS_16 = RAW_CARDS.map(c=>{
-      const poster = c.media.replace(/\/video\/(.+?)\.mp4$/i, '/video/poster/$1.jpg');
-      return {...c, poster};
-    });
+
+    // 최종 카드: 세로용 mediaV, 가로용 mediaH(spot/result 전용)
+    const CARDS_16 = RAW.map(c => ({
+      ...c,
+      mediaV: vPortrait(c.id),
+      mediaH: vLandscape(c.id),         // spotlight/result 우선 사용
+      posterV: pPortrait(c.id),
+      posterH: pLandscape(c.id)
+    }));
 
     /* ===== 유틸/상태 ===== */
     const $ = s => document.querySelector(s);
@@ -309,9 +308,26 @@
       $('#bartext').textContent = `${played} / ${totalMatches}`;
     }
 
-    function mediaTag(src, poster){
-      return `<video src="${src}" poster="${poster}" autoplay muted loop playsinline preload="metadata"
-                disablepictureinpicture controlslist="nodownload noplaybackrate noremoteplayback nofullscreen"></video>`;
+    // 비디오 태그 생성기
+    function videoV(srcV, posterV){
+      return `
+        <video autoplay muted loop playsinline preload="metadata"
+               poster="${posterV}" disablepictureinpicture
+               controlslist="nodownload noplaybackrate noremoteplayback nofullscreen">
+          <source src="${srcV}" type="video/mp4">
+        </video>`;
+    }
+
+    // 가로(우선) → 세로(폴백) 순으로 소스 2개 제공
+    function videoH(srcH, srcV, posterH, posterV){
+      const poster = posterH || posterV || POSTER_FALLBACK;
+      return `
+        <video autoplay muted loop playsinline preload="metadata"
+               poster="${poster}" disablepictureinpicture
+               controlslist="nodownload noplaybackrate noremoteplayback nofullscreen">
+          <source src="${srcH}" type="video/mp4">
+          <source src="${srcV}" type="video/mp4">
+        </video>`;
     }
 
     const seedPairs = arr => { const s=shuffle([...arr]); const pairs=[]; for(let i=0;i<s.length;i+=2){ pairs.push([s[i], s[i+1]]);} return pairs; };
@@ -333,10 +349,10 @@
       const [a,b]=queue[0];
       const make = (card,side)=>{
         const btn=document.createElement('button'); btn.className='candidate';
-        const poster = card.poster || POSTER_FALLBACK;
+        const posterV = card.posterV || POSTER_FALLBACK;
         btn.innerHTML = `
           <div class="mediaV">
-            ${mediaTag(card.media, poster)}
+            ${videoV(card.mediaV, posterV)}
           </div>
           <div class="label">
             <span class="name">${card.title}</span>
@@ -380,8 +396,11 @@
       $('#bartext').textContent=`${totalMatches} / ${totalMatches}`;
       $('#roundTag').textContent='🏆 우승 확정';
 
-      const poster = winner.poster || POSTER_FALLBACK;
-      $('#spotMedia').innerHTML = `<video src="${winner.media}" poster="${poster}" autoplay muted loop playsinline preload="metadata"></video>`;
+      // 우승자 가로 우선 / 세로 폴백
+      $('#spotMedia').innerHTML = videoH(
+        winner.mediaH, winner.mediaV,
+        winner.posterH, winner.posterV
+      );
 
       setView('spot'); countdown(3, showResult);
     }
@@ -393,8 +412,8 @@
                  : (keys.includes('직접')&&keys.includes('문제해결'))?'솔루션 드리블러'
                  : '마이 페이스 러버';
       const desc = {
-        '믿음직 플래너':'무리하지 않고 내 템포로. 오래 편안한 관계를 추구해요.',
-        '스파클러':'새로움에 반짝! 즉석 제안, 작은 모험에서 설렘을 느껴요.',
+        '믿음직 플래너':'약속과 루틴이 편안함을 줘요. 계획 공유하면 애정도↑',
+        '스파클러':'새로움에 반짝! 즉석 제안, 작은 모험에 설렘을 느껴요.',
         '솔루션 드리블러':'돌려 말하는 것보다 바로 해결! 상황을 두고 대화하는 편.',
         '마이 페이스 러버':'무리하지 않고 내 템포로. 오래 편안한 관계를 추구해요.'
       }[name];
@@ -403,15 +422,17 @@
 
     function showResult(){
       const top3=calcProfile(); const {name,desc}=profileText(top3);
-      const poster = winner.poster || POSTER_FALLBACK;
-      $('#winnerMedia').innerHTML = `<video src="${winner.media}" poster="${poster}" autoplay muted loop playsinline preload="metadata"></video>`;
+      $('#winnerMedia').innerHTML = videoH(
+        winner.mediaH, winner.mediaV,
+        winner.posterH, winner.posterV
+      );
       $('#profileTitle').textContent=`당신은 «${name}» 타입`;
       $('#profileDesc').textContent=desc;
 
       // 태그 칩
       $('#profileTags').innerHTML=(winner.tags||[]).map(t=>`<span class="tag">#${t}</span>`).join('');
 
-      // KPI 바
+      // KPI 바(퍼센트 + 애니메이션)
       const rows = top3.map(([k,v])=>{
         const pct = Math.min(100, Math.round((v/4.5)*100));
         return `
@@ -455,9 +476,9 @@
       })();
     }
 
-    document.getElementById('btnHome').addEventListener('click', ()=> location.href='./');
-    document.getElementById('btnAgain').addEventListener('click', start);
-    document.getElementById('btnShare').addEventListener('click', shareNow);
+    $('#btnHome').addEventListener('click', ()=> location.href='index.html');
+    $('#btnAgain').addEventListener('click', start);
+    $('#btnShare').addEventListener('click', shareNow);
 
     window.addEventListener('keydown', (e)=>{
       if(document.body.getAttribute('data-view')!=='game') return;
