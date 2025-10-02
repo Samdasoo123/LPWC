@@ -12,9 +12,6 @@
   <link rel="preload" as="video" href="./assets/video/S1.mp4">
   <link rel="preload" as="image" href="./assets/video/poster/S1.jpg">
 
-  <!-- Kakao JS SDK (카카오 버튼 쓰려면 사용 / 앱키 필요) -->
-  <script src="https://developers.kakao.com/sdk/js/kakao.min.js" defer></script>
-
   <style>
     :root{
       --bg:#fff0f6; --ink:#19202a; --muted:#7891a6;
@@ -23,7 +20,6 @@
       --bar-grad:linear-gradient(90deg,#ff9ad0,#ffd2a4,#8ef0d0,#b7a9ff);
       --bar-stripe:repeating-linear-gradient(45deg, rgba(255,255,255,.45) 0 10px, rgba(255,255,255,0) 10px 20px);
       --accent:#ff5fa6;
-      --pill:#ffe3f0;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -115,11 +111,23 @@
     .mediaV>*{ width:100%; height:100%; object-fit:cover; object-position:center top; display:block; }
 
     /* Spotlight/Result 공통 미디어(가로 16:9 + 오버레이) */
+    .center{ display:grid; place-items:center; text-align:center; gap:12px; }
+    .panel{ background:var(--glass); border:1px solid var(--line); border-radius:24px; padding:20px; backdrop-filter: blur(14px) saturate(130%); box-shadow: var(--shadow); }
+    .panel.center{ margin:0 auto; }
+    .panel.result{
+      padding:28px 22px;
+      background:linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.6));
+      border:1px solid rgba(255,133,192,.45);
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
     .mediaH{
       position:relative;
       max-width:min(60vw, 820px); width:100%; height:auto; aspect-ratio:16/9;
       border-radius:20px; overflow:hidden; border:1px solid var(--line); background:#fff1f7;
       box-shadow:0 10px 30px rgba(0,0,0,.12);
+      margin: 0 auto;
     }
     .mediaH::after{
       content:""; position:absolute; inset:0;
@@ -133,23 +141,6 @@
     .name{font-weight:900; color:var(--accent); letter-spacing:.01em}
     .seed{font-size:12px;color:var(--muted)}
 
-    .tag{ display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line); background:rgba(255,255,255,.92);
-      border-radius:999px; padding:5px 12px; font-size:12px; color:var(--accent); box-shadow: var(--shadow); font-weight:800; }
-
-    main>section{display:none !important}
-    body[data-view="game"]   #screen-game{display:block !important}
-    body[data-view="spot"]   #screen-spot{display:block !important}
-    body[data-view="result"] #screen-result{display:block !important}
-
-    /* ===== 결과 화면 ===== */
-    .panel{ background:var(--glass); border:1px solid var(--line); border-radius:24px; padding:20px; backdrop-filter: blur(14px) saturate(130%); box-shadow: var(--shadow); }
-    .panel.result{
-      padding:28px 22px;
-      background:linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.6));
-      border:1px solid rgba(255,133,192,.45);
-      max-width: 1000px;
-      margin: 0 auto;
-    }
     .title{
       margin:12px 0 8px; font-size:28px; line-height:1.25; font-weight:900; letter-spacing:.01em;
       text-align:center; color:#101621; text-shadow:0 1px 0 rgba(255,255,255,.7), 0 12px 30px rgba(0,0,0,.08);
@@ -167,30 +158,12 @@
 
     .actions{display:flex; gap:10px; justify-content:center; margin-top:6px; flex-wrap:wrap}
 
-    /* ===== 공유 시트 ===== */
-    .share-mask{
-      position:fixed; inset:0; background:rgba(0,0,0,.35); display:none; z-index:99;
+    /* 공유 링크 단순 표시 */
+    .shareline{display:flex; gap:8px; align-items:center; justify-content:center; margin-top:8px; width:100%;}
+    .shareline input{
+      width:min(560px, 80vw); padding:10px 12px; border-radius:12px; border:1px solid var(--line);
+      background:#fff; font-size:14px;
     }
-    .share-sheet{
-      position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
-      width:min(560px, 92vw); background:linear-gradient(180deg,#fff,#fff6fb);
-      border:1px solid var(--line); border-radius:18px; box-shadow: var(--shadow); padding:16px; z-index:100; display:none;
-    }
-    .share-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-    .share-title{font-weight:900}
-    .share-grid{
-      display:grid; grid-template-columns:repeat(5, 1fr); gap:10px; padding:4px 2px;
-    }
-    .share-btn{
-      display:flex; flex-direction:column; align-items:center; gap:8px; padding:12px 6px;
-      border:1px solid var(--line); border-radius:14px; background:var(--pill); cursor:pointer;
-      transition:transform .06s ease, border-color .15s;
-    }
-    .share-btn:hover{ transform:translateY(-2px); border-color:#ff9ad0; }
-    .share-ico{font-size:24px; line-height:1}
-    .share-label{font-size:12px; font-weight:800; color:#333}
-    .share-foot{display:flex; justify-content:flex-end; margin-top:12px}
-    .share-close{background:#fff; border:1px solid var(--line)}
 
     /* 하트 */
     .heart{ position:fixed; pointer-events:none; z-index:9999; font-size:16px; animation: float 900ms ease forwards; filter: drop-shadow(0 4px 8px rgba(255,105,180,.35)); }
@@ -220,7 +193,7 @@
       </div>
     </section>
 
-    <!-- Spotlight -->
+    <!-- Spotlight(최종 우승 안내) -->
     <section id="screen-spot">
       <div class="panel center">
         <div class="tag">🏆 최종 우승</div>
@@ -244,45 +217,19 @@
 
         <div class="actions">
           <button class="btn primary" id="btnAgain">다시 하기</button>
-          <button class="btn" id="btnShare">결과 공유</button>
+          <button class="btn" id="btnShare">결과 링크 보기</button>
+        </div>
+
+        <!-- 단순 공유 링크 표시 -->
+        <div id="shareLine" class="shareline" style="display:none">
+          <input id="shareUrl" type="text" readonly>
+          <button class="btn" id="btnCopy">링크 복사</button>
         </div>
       </div>
     </section>
   </main>
 
-  <!-- ===== 공유 시트 (5개 버튼) ===== -->
-  <div id="shareMask" class="share-mask"></div>
-  <div id="shareSheet" class="share-sheet" role="dialog" aria-modal="true" aria-labelledby="shareTitle">
-    <div class="share-head">
-      <div id="shareTitle" class="share-title">결과 공유</div>
-      <button class="btn share-close" id="shareClose">닫기</button>
-    </div>
-    <div class="share-grid">
-      <button class="share-btn" id="share-kakao"   aria-label="카카오톡">
-        <div class="share-ico">🟡</div><div class="share-label">카카오톡</div>
-      </button>
-      <button class="share-btn" id="share-instagram" aria-label="인스타그램">
-        <div class="share-ico">📷</div><div class="share-label">인스타</div>
-      </button>
-      <button class="share-btn" id="share-twitter" aria-label="트위터">
-        <div class="share-ico">𝕏</div><div class="share-label">트위터</div>
-      </button>
-      <button class="share-btn" id="share-facebook" aria-label="페이스북">
-        <div class="share-ico">f</div><div class="share-label">페이스북</div>
-      </button>
-      <button class="share-btn" id="share-linkedin" aria-label="링크드인">
-        <div class="share-ico">in</div><div class="share-label">링크드인</div>
-      </button>
-    </div>
-    <div class="share-foot">
-      <button class="btn share-close" id="shareCopy">링크 복사</button>
-    </div>
-  </div>
-
   <script>
-    /* ===== 설정: Kakao 앱키 (있으면 입력, 없으면 빈 문자열) ===== */
-    const KAKAO_APP_KEY = ""; // 예: "0a1b2c3d4e5f6g7h8i9j0k..."
-
     /* ===== 배경음 ===== */
     const GAME_BGM = new Audio('./assets/audio/bgm_game.wav');
     GAME_BGM.loop = true; GAME_BGM.volume = 0;
@@ -328,11 +275,6 @@
     const $ = s => document.querySelector(s);
     const $$ = s => Array.from(document.querySelectorAll(s));
     const shuffle = a => { for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]] } return a; };
-    const openCentered = (url, w=640, h=700) => {
-      const y = window.top.outerHeight/2 + window.top.screenY - ( h/2);
-      const x = window.top.outerWidth/2  + window.top.screenX - ( w/2);
-      window.open(url, '_blank', `popup=yes,toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=${w},height=${h},top=${y},left=${x}`);
-    };
     async function copyToClipboard(text){
       try{ await navigator.clipboard.writeText(text); alert('링크 복사 완료'); }
       catch(e){ prompt('아래 링크를 복사하세요', text); }
@@ -418,10 +360,12 @@
       renderPair(); setTimeout(()=>picking=false,90);
     }
 
-    function calcProfile(){
+    function calcProfile(baseWinner){
       const AXES = ['안정','자극','직접','배려','계획','즉흥','분리','함께','문제해결','쿨다운','말로','행동'];
       const score = Object.fromEntries(AXES.map(a=>[a,0]));
-      winner.tags?.forEach(t=> score[t]=(score[t]||0)+3);
+      // 우승자 태그 가중
+      baseWinner.tags?.forEach(t=> score[t]=(score[t]||0)+3);
+      // 플레이로 얻은 보정 (없으면 스킵)
       const tail=history.slice(-3);
       for(const m of tail){
         const opp=[m.left,m.right].find(id=>id!==m.pick);
@@ -429,18 +373,6 @@
         oppCard?.tags?.forEach(t=> score[t]+= (m.round===2?1:0.5));
       }
       return Object.entries(score).sort((a,b)=>b[1]-a[1]).slice(0,3);
-    }
-
-    function spotlight(){
-      $('#pair').innerHTML='';
-      $('#bar').style.width='100%';
-      $('#bartext').textContent=`${totalMatches} / ${totalMatches}`;
-      $('#roundTag').textContent='🏆 우승 확정';
-
-      const poster = winner.poster || POSTER_FALLBACK;
-      $('#spotMedia').innerHTML = `<video src="${winner.media}" poster="${poster}" autoplay muted loop playsinline preload="metadata"></video>`;
-
-      setView('spot'); countdown(3, showResult);
     }
 
     function profileText(top3){
@@ -458,15 +390,27 @@
       return {name, desc};
     }
 
-    function showResult(){
-      const top3=calcProfile(); const {name,desc}=profileText(top3);
+    function spotlight(){
+      $('#pair').innerHTML='';
+      $('#bar').style.width='100%';
+      $('#bartext').textContent=`${totalMatches} / ${totalMatches}`;
+      $('#roundTag').textContent='🏆 우승 확정';
+
       const poster = winner.poster || POSTER_FALLBACK;
-      $('#winnerMedia').innerHTML = `<video src="${winner.media}" poster="${poster}" autoplay muted loop playsinline preload="metadata"></video>`;
+      $('#spotMedia').innerHTML = `<video src="${winner.media}" poster="${poster}" autoplay muted loop playsinline preload="metadata"></video>`;
+
+      setView('spot'); countdown(3, showResult);
+    }
+
+    function fillResult(withWinner){
+      const top3=calcProfile(withWinner); const {name,desc}=profileText(top3);
+      const poster = withWinner.poster || POSTER_FALLBACK;
+      $('#winnerMedia').innerHTML = `<video src="${withWinner.media}" poster="${poster}" autoplay muted loop playsinline preload="metadata"></video>`;
       $('#profileTitle').textContent=`당신은 «${name}» 타입`;
       $('#profileDesc').textContent=desc;
 
       // 태그 칩
-      $('#profileTags').innerHTML=(winner.tags||[]).map(t=>`<span class="tag">#${t}</span>`).join('');
+      $('#profileTags').innerHTML=(withWinner.tags||[]).map(t=>`<span class="tag">#${t}</span>`).join('');
 
       // KPI 바(퍼센트 + 애니메이션)
       const rows = top3.map(([k,v])=>{
@@ -480,7 +424,6 @@
       }).join('');
       $('#axisBars').innerHTML = rows;
 
-      // 애니메이션
       $$('#axisBars .krow').forEach(row=>{
         const fill=row.querySelector('.fill'); const to=+fill.dataset.target;
         const val=row.querySelector('.kval'); const start=performance.now(); const dur=750;
@@ -491,7 +434,10 @@
         }
         requestAnimationFrame(step);
       });
+    }
 
+    function showResult(){
+      fillResult(winner);
       setView('result');
     }
 
@@ -500,91 +446,25 @@
       const iv=setInterval(()=>{ t--; el.textContent=`(${t}s)`; if(t<=0){clearInterval(iv); el.textContent=''; done();}},1000);
     }
 
-    /* ===== 공유 시트 로직 ===== */
-    const shareMask  = $('#shareMask');
-    const shareSheet = $('#shareSheet');
-    const shareOpen  = () => { shareMask.style.display='block'; shareSheet.style.display='block'; };
-    const shareClose = () => { shareMask.style.display='none';  shareSheet.style.display='none';  };
-    $('#shareClose').addEventListener('click', shareClose);
-    shareMask.addEventListener('click', shareClose);
-
+    /* ===== 간단 공유(링크 표시/복사) ===== */
     function currentShareUrl(){
       const url = new URL(location.href);
       if(winner) url.searchParams.set('winner', winner.id);
       return url.toString();
     }
-
-    function initKakao(){
-      if(!KAKAO_APP_KEY) return false;
-      if(!window.Kakao)  return false;
-      try{
-        if(!window.Kakao.isInitialized()) window.Kakao.init(KAKAO_APP_KEY);
-        return true;
-      }catch(e){ return false; }
-    }
-
-    function shareKakao(){
-      const ok = initKakao();
-      const shareUrl = currentShareUrl();
-      const poster   = winner?.poster || POSTER_FALLBACK;
-      const title    = '연애 심리 월드컵 결과';
-      const desc     = $('#profileTitle')?.textContent || '나의 연애 심리를 확인해보세요!';
-      if(ok){
-        try{
-          window.Kakao.Share.sendDefault({
-            objectType: 'feed',
-            content: {
-              title: title,
-              description: desc,
-              imageUrl: new URL(poster, location.href).toString(),
-              link: { mobileWebUrl: shareUrl, webUrl: shareUrl }
-            },
-            buttons: [{ title:'결과 보기', link:{ mobileWebUrl: shareUrl, webUrl: shareUrl }}]
-          });
-          return;
-        }catch(e){}
+    function toggleShareLine(show){
+      $('#shareLine').style.display = show ? 'flex' : 'none';
+      if(show){
+        const u = currentShareUrl();
+        $('#shareUrl').value = u;
       }
-      copyToClipboard(shareUrl); // 폴백
     }
+    $('#btnShare').addEventListener('click', ()=> toggleShareLine(true));
+    $('#btnCopy').addEventListener('click', ()=> copyToClipboard($('#shareUrl').value));
 
-    function shareInstagram(){
-      const shareUrl = currentShareUrl();
-      // 모바일/지원환경에서 Web Share API 시도
-      if(navigator.share){
-        navigator.share({ title:'연애 심리 월드컵', url: shareUrl }).catch(()=>copyToClipboard(shareUrl));
-        return;
-      }
-      // 인스타그램은 웹 링크 공유가 제한적 → 링크 복사 후 인스타 열기
-      copyToClipboard(shareUrl);
-      openCentered('https://instagram.com/', 1000, 800);
-    }
-
-    function shareTwitter(){
-      const shareUrl = encodeURIComponent(currentShareUrl());
-      const text = encodeURIComponent('연애 심리 월드컵 결과');
-      openCentered(`https://twitter.com/intent/tweet?url=${shareUrl}&text=${text}`);
-    }
-    function shareFacebook(){
-      const shareUrl = encodeURIComponent(currentShareUrl());
-      openCentered(`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`);
-    }
-    function shareLinkedIn(){
-      const shareUrl = encodeURIComponent(currentShareUrl());
-      const title = encodeURIComponent('연애 심리 월드컵 결과');
-      openCentered(`https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}&title=${title}`);
-    }
-
-    $('#btnShare').addEventListener('click', shareOpen);
-    $('#shareCopy').addEventListener('click', ()=>copyToClipboard(currentShareUrl()));
-    $('#share-kakao').addEventListener('click', shareKakao);
-    $('#share-instagram').addEventListener('click', shareInstagram);
-    $('#share-twitter').addEventListener('click', shareTwitter);
-    $('#share-facebook').addEventListener('click', shareFacebook);
-    $('#share-linkedin').addEventListener('click', shareLinkedIn);
-
-    /* 기타 이벤트 */
+    /* ===== 기타 이벤트 & 딥링크 처리 ===== */
     $('#btnHome').addEventListener('click', ()=> location.href='index.html');
-    $('#btnAgain').addEventListener('click', start);
+    $('#btnAgain').addEventListener('click', ()=>{ toggleShareLine(false); start(); });
 
     window.addEventListener('keydown', (e)=>{
       if(document.body.getAttribute('data-view')!=='game') return;
@@ -593,7 +473,23 @@
       if(['ArrowRight','d','D'].includes(e.key)) R.click();
     });
 
-    document.addEventListener('DOMContentLoaded', start);
+    // 딥링크: ?winner=ID 로 진입 시 바로 결과 화면
+    function openWinnerByQuery(){
+      const id = new URLSearchParams(location.search).get('winner');
+      if(!id) return false;
+      const found = CARDS_16.find(c=>c.id===id);
+      if(!found) return false;
+      winner = found;
+      fillResult(winner);
+      setView('result');
+      // 결과 화면에서도 공유 링크 즉시 준비(표시 여부는 버튼으로)
+      $('#shareUrl').value = currentShareUrl();
+      return true;
+    }
+
+    document.addEventListener('DOMContentLoaded', ()=>{
+      if(!openWinnerByQuery()) start();
+    });
   </script>
 </body>
 </html>
