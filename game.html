@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>연애 심리 월드컵 · 16강(영상)</title>
 
-  <!-- 프리로드(선택) -->
+  <!-- 프리로드(선택) — 세로/가로 한 두 개만 워밍업 -->
   <link rel="preload" as="image" href="./assets/bg/bg_4k.jpg">
   <link rel="preload" as="image" href="./assets/logo/logo_main_kr.png">
   <link rel="preload" as="audio" href="./assets/audio/bgm_game.wav">
   <link rel="preload" as="video" href="./assets/video/S1.mp4">
-  <link rel="preload" as="image" href="./assets/video/poster/S1.jpg">
+  <link rel="preload" as="video" href="./assets/video_wide/S1.mp4">
 
   <style>
     :root{
@@ -242,7 +242,7 @@
     });
     document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && gameBgmStarted && GAME_BGM.paused) GAME_BGM.play().catch(()=>{}); });
 
-    /* ===== 카드 데이터 ===== */
+    /* ===== 카드 데이터 (세로 기본, 가로 파생 자동 생성) ===== */
     const RAW_CARDS = [
       {id:'S1', title:'솔직 직설 화법',    tags:['직접'],             media:'./assets/video/S1.mp4'},
       {id:'S2', title:'개인시간 중요',      tags:['분리'],             media:'./assets/video/S2.mp4'},
@@ -262,12 +262,18 @@
       {id:'C8', title:'솔루션 제시형',        tags:['문제해결','직접'],  media:'./assets/video/C8.mp4'},
     ];
 
-    // 포스터 자동 유추: /video/xxx.mp4 → /video/poster/xxx.jpg
-    const POSTER_FALLBACK = './assets/bg/bg_4k.jpg';
-    const CARDS_16 = RAW_CARDS.map(c=>{
-      const poster = c.media.replace(/\/video\/(.+?)\.mp4$/i, '/video/poster/$1.jpg');
-      return {...c, poster};
-    });
+    // 파생 경로(가로 영상 & 포스터) 자동 생성
+    const POSTER_FALLBACK_V = './assets/bg/bg_4k.jpg';
+    function derivePaths(src){ // ./assets/video/ID.mp4 -> wide & 포스터 경로
+      const id = (src.match(/\/video\/(.+?)\.mp4$/i)||[])[1] || '';
+      return {
+        vSrc: src,
+        vPoster: `./assets/video/poster/${id}.jpg`,
+        hSrc: `./assets/video_wide/${id}.mp4`,
+        hPoster: `./assets/video_wide/poster/${id}.jpg`
+      };
+    }
+    const CARDS_16 = RAW_CARDS.map(c=> Object.assign({}, c, derivePaths(c.media)));
 
     /* ===== 공통 유틸 ===== */
     const $ = s => document.querySelector(s);
@@ -282,15 +288,15 @@
     let bracket=[], queue=[], next=[], history=[], played=0, winner=null, picking=false;
     const totalMatches = CARDS_16.length - 1; // 16강 전체 매치수 = 15
 
-    /* ===== 방탄 뷰 전환: CSS + JS 이중 제어 ===== */
+    /* ===== 방탄 뷰 전환 ===== */
     function setView(view){
       document.body.setAttribute('data-view', view);
-      // JS로도 확실히 잠금
       const game = $('#screen-game'), spot=$('#screen-spot'), result=$('#screen-result');
       game.style.display = 'none'; spot.style.display = 'none'; result.style.display = 'none';
       (view==='game'?game: view==='spot'?spot: result).style.display = 'block';
     }
 
+    /* ===== 하트 애니 ===== */
     function hearts(x,y,count=6){
       for(let i=0;i<count;i++){
         const el=document.createElement('div');
@@ -304,6 +310,7 @@
       }
     }
 
+    /* ===== 라운드/진행도 ===== */
     function roundName(n){ return n>=16?'16강':n>=8?'8강':n>=4?'4강':n===2?'결승':''; }
     function updateRoundTag(){
       const name = roundName(bracket.length);
@@ -315,20 +322,40 @@
       $('#bar').style.width = pct + '%';
       $('#bartext').textContent = `${played} / ${totalMatches}`;
     }
-    function mediaTag(src, poster){
-      return `<video src="${src}" poster="${poster}" autoplay muted loop playsinline preload="metadata"
-                disablepictureinpicture controlslist="nodownload noplaybackrate noremoteplayback nofullscreen"></video>`;
+
+    /* ===== 비디오 태그 생성(가로/세로 + 폴백) ===== */
+    function makeVideoHTML(primarySrc, primaryPoster, fallbackSrc, fallbackPoster){
+      // 비디오 태그를 만들고, 에러 시 폴백 소스로 스와프
+      const v = document.createElement('video');
+      v.autoplay = true; v.muted = true; v.loop = true; v.playsInline = true;
+      v.preload = 'metadata';
+      v.setAttribute('disablepictureinpicture','');
+      v.setAttribute('controlslist','nodownload noplaybackrate noremoteplayback nofullscreen');
+      v.src = primarySrc;
+      if (primaryPoster) v.poster = primaryPoster;
+
+      // 폴백 핸들링(가로 파일이 없을 때 세로로 대체)
+      v.addEventListener('error', ()=>{
+        if (v.src.endsWith(primarySrc.replace('./',''))) {
+          v.src = fallbackSrc;
+          if (fallbackPoster) v.poster = fallbackPoster;
+        }
+      }, {once:true});
+
+      const wrap = document.createElement('div');
+      wrap.appendChild(v);
+      return wrap.innerHTML; // 문자열로 반환(기존 렌더 방식과 맞춤)
     }
 
-    const seedPairs = arr => { const s=shuffle([...arr]); const pairs=[]; for(let i=0;i<s.length;i+=2){ pairs.push([s[i], s[i+1]]);} return pairs; };
-
-    /* ===== 흐름 ===== */
+    /* ===== 토너먼트 흐름 ===== */
     function start(){
       bracket = shuffle([...CARDS_16]);
       queue = seedPairs(bracket);
       next = []; history=[]; played=0; winner=null; picking=false;
       setView('game'); updateRoundTag(); updateProgress(); renderPair();
     }
+
+    const seedPairs = arr => { const s=shuffle([...arr]); const pairs=[]; for(let i=0;i<s.length;i+=2){ pairs.push([s[i], s[i+1]]);} return pairs; };
 
     function renderPair(){
       const root = $('#pair'); root.innerHTML='';
@@ -340,10 +367,10 @@
       const [a,b]=queue[0];
       const make = (card,side)=>{
         const btn=document.createElement('button'); btn.className='candidate';
-        const poster = card.poster || POSTER_FALLBACK;
+        const html = makeVideoHTML(card.vSrc, card.vPoster, card.vSrc, card.vPoster || POSTER_FALLBACK_V);
         btn.innerHTML = `
           <div class="mediaV">
-            ${mediaTag(card.media, poster)}
+            ${html}
           </div>
           <div class="label">
             <span class="name">${card.title}</span>
@@ -382,23 +409,32 @@
     }
 
     function spotlight(){
-      // 진행 화면 닫고 우승 화면만
       setView('spot');
       $('#pair').innerHTML='';
       $('#bar').style.width='100%';
       $('#bartext').textContent=`${totalMatches} / ${totalMatches}`;
       $('#roundTag').textContent='🏆 우승 확정';
 
-      const poster = winner.poster || POSTER_FALLBACK;
-      $('#spotMedia').innerHTML = `<video src="${winner.media}" poster="${poster}" autoplay muted loop playsinline preload="metadata"></video>`;
+      // 우승 화면은 가로 영상 우선, 실패 시 세로로 폴백
+      const html = makeVideoHTML(
+        winner.hSrc, winner.hPoster,
+        winner.vSrc, winner.vPoster || POSTER_FALLBACK_V
+      );
+      $('#spotMedia').innerHTML = html;
 
       countdown(3, showResult);
     }
 
     function fillResult(withWinner){
       const top3=calcProfile(withWinner); const {name,desc}=profileText(top3);
-      const poster = withWinner.poster || POSTER_FALLBACK;
-      $('#winnerMedia').innerHTML = `<video src="${withWinner.media}" poster="${poster}" autoplay muted loop playsinline preload="metadata"></video>`;
+
+      // 결과 화면도 가로 영상 우선, 실패 시 세로로 폴백
+      const html = makeVideoHTML(
+        withWinner.hSrc, withWinner.hPoster,
+        withWinner.vSrc, withWinner.vPoster || POSTER_FALLBACK_V
+      );
+      $('#winnerMedia').innerHTML = html;
+
       $('#profileTitle').textContent=`당신은 «${name}» 타입`;
       $('#profileDesc').textContent=desc;
       $('#profileTags').innerHTML=(withWinner.tags||[]).map(t=>`<span class="tag">#${t}</span>`).join('');
@@ -440,10 +476,8 @@
     }
 
     function showResult(){
-      // 우승 화면 닫고 결과 화면만
       setView('result');
       fillResult(winner);
-      // 공유 링크 준비
       const url = new URL(location.href); if(winner) url.searchParams.set('winner', winner.id);
       $('#shareUrl').value = url.toString();
     }
@@ -485,7 +519,7 @@
       const found = CARDS_16.find(c=>c.id===id);
       if(!found) return false;
       winner = found;
-      setView('result'); // 먼저 결과로 전환
+      setView('result');
       fillResult(winner);
       $('#shareUrl').value = currentShareUrl();
       return true;
@@ -493,7 +527,7 @@
 
     document.addEventListener('DOMContentLoaded', ()=>{
       if(!openWinnerByQuery()) start();
-      else toggleShareLine(true); // 공유 링크 노출(선택 사항)
+      else toggleShareLine(true);
     });
   </script>
 </body>
