@@ -110,18 +110,11 @@
     .mediaV{ position:relative; width:100%; aspect-ratio:9/16; height:auto; max-height:78vh; border-radius:inherit; overflow:hidden; background:#fff1f7; }
     .mediaV>*{ width:100%; height:100%; object-fit:cover; object-position:center top; display:block; }
 
-    /* Spotlight/Result 공통 미디어(가로 16:9 + 오버레이) */
+    /* 공통 레이아웃 (가운데 정렬 보증) */
     .center{ display:grid; place-items:center; text-align:center; gap:12px; }
-    .panel{ background:var(--glass); border:1px solid var(--line); border-radius:24px; padding:20px; backdrop-filter: blur(14px) saturate(130%); box-shadow: var(--shadow); }
-    .panel.center{ margin:0 auto; }
-    .panel.result{
-      padding:28px 22px;
-      background:linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.6));
-      border:1px solid rgba(255,133,192,.45);
-      max-width: 1000px;
-      margin: 0 auto;
-    }
+    .panel{ background:var(--glass); border:1px solid var(--line); border-radius:24px; padding:20px; backdrop-filter: blur(14px) saturate(130%); box-shadow: var(--shadow); margin:0 auto; }
 
+    /* Spotlight/Result 미디어(가로 16:9) */
     .mediaH{
       position:relative;
       max-width:min(60vw, 820px); width:100%; height:auto; aspect-ratio:16/9;
@@ -165,7 +158,13 @@
       background:#fff; font-size:14px;
     }
 
-    /* 하트 */
+    /* === VIEW STATE: 기본은 모두 숨김, data-view로 열기 (CSS잠금) === */
+    main>section{display:none !important}
+    body[data-view="game"]   #screen-game{display:block !important}
+    body[data-view="spot"]   #screen-spot{display:block !important}
+    body[data-view="result"] #screen-result{display:block !important}
+
+    /* 하트 이모지 */
     .heart{ position:fixed; pointer-events:none; z-index:9999; font-size:16px; animation: float 900ms ease forwards; filter: drop-shadow(0 4px 8px rgba(255,105,180,.35)); }
     @keyframes float{ 0%{ transform:translate(-50%,-30%) scale(.8); opacity:.9 } 70%{ opacity:1 } 100%{ transform:translate(-50%,-120%) scale(1.2); opacity:0 } }
   </style>
@@ -193,7 +192,7 @@
       </div>
     </section>
 
-    <!-- Spotlight(최종 우승 안내) -->
+    <!-- Spotlight -->
     <section id="screen-spot">
       <div class="panel center">
         <div class="tag">🏆 최종 우승</div>
@@ -205,7 +204,7 @@
 
     <!-- Result -->
     <section id="screen-result">
-      <div class="panel result center">
+      <div class="panel center" style="max-width:1000px;">
         <div class="tag">📜 결과</div>
         <div id="winnerMedia" class="mediaH" style="max-width:min(70vw,900px)"></div>
 
@@ -220,7 +219,6 @@
           <button class="btn" id="btnShare">결과 링크 보기</button>
         </div>
 
-        <!-- 단순 공유 링크 표시 -->
         <div id="shareLine" class="shareline" style="display:none">
           <input id="shareUrl" type="text" readonly>
           <button class="btn" id="btnCopy">링크 복사</button>
@@ -280,9 +278,18 @@
       catch(e){ prompt('아래 링크를 복사하세요', text); }
     }
 
+    /* ===== 상태 ===== */
     let bracket=[], queue=[], next=[], history=[], played=0, winner=null, picking=false;
     const totalMatches = CARDS_16.length - 1; // 16강 전체 매치수 = 15
-    const setView = v => document.body.setAttribute('data-view', v);
+
+    /* ===== 방탄 뷰 전환: CSS + JS 이중 제어 ===== */
+    function setView(view){
+      document.body.setAttribute('data-view', view);
+      // JS로도 확실히 잠금
+      const game = $('#screen-game'), spot=$('#screen-spot'), result=$('#screen-result');
+      game.style.display = 'none'; spot.style.display = 'none'; result.style.display = 'none';
+      (view==='game'?game: view==='spot'?spot: result).style.display = 'block';
+    }
 
     function hearts(x,y,count=6){
       for(let i=0;i<count;i++){
@@ -315,6 +322,7 @@
 
     const seedPairs = arr => { const s=shuffle([...arr]); const pairs=[]; for(let i=0;i<s.length;i+=2){ pairs.push([s[i], s[i+1]]);} return pairs; };
 
+    /* ===== 흐름 ===== */
     function start(){
       bracket = shuffle([...CARDS_16]);
       queue = seedPairs(bracket);
@@ -363,9 +371,7 @@
     function calcProfile(baseWinner){
       const AXES = ['안정','자극','직접','배려','계획','즉흥','분리','함께','문제해결','쿨다운','말로','행동'];
       const score = Object.fromEntries(AXES.map(a=>[a,0]));
-      // 우승자 태그 가중
       baseWinner.tags?.forEach(t=> score[t]=(score[t]||0)+3);
-      // 플레이로 얻은 보정 (없으면 스킵)
       const tail=history.slice(-3);
       for(const m of tail){
         const opp=[m.left,m.right].find(id=>id!==m.pick);
@@ -373,6 +379,49 @@
         oppCard?.tags?.forEach(t=> score[t]+= (m.round===2?1:0.5));
       }
       return Object.entries(score).sort((a,b)=>b[1]-a[1]).slice(0,3);
+    }
+
+    function spotlight(){
+      // 진행 화면 닫고 우승 화면만
+      setView('spot');
+      $('#pair').innerHTML='';
+      $('#bar').style.width='100%';
+      $('#bartext').textContent=`${totalMatches} / ${totalMatches}`;
+      $('#roundTag').textContent='🏆 우승 확정';
+
+      const poster = winner.poster || POSTER_FALLBACK;
+      $('#spotMedia').innerHTML = `<video src="${winner.media}" poster="${poster}" autoplay muted loop playsinline preload="metadata"></video>`;
+
+      countdown(3, showResult);
+    }
+
+    function fillResult(withWinner){
+      const top3=calcProfile(withWinner); const {name,desc}=profileText(top3);
+      const poster = withWinner.poster || POSTER_FALLBACK;
+      $('#winnerMedia').innerHTML = `<video src="${withWinner.media}" poster="${poster}" autoplay muted loop playsinline preload="metadata"></video>`;
+      $('#profileTitle').textContent=`당신은 «${name}» 타입`;
+      $('#profileDesc').textContent=desc;
+      $('#profileTags').innerHTML=(withWinner.tags||[]).map(t=>`<span class="tag">#${t}</span>`).join('');
+      const rows = top3.map(([k,v])=>{
+        const pct = Math.min(100, Math.round((v/4.5)*100));
+        return `
+          <div class="krow">
+            <div class="kname">${k}</div>
+            <div class="meter"><div class="fill" style="width:0%" data-target="${pct}"></div></div>
+            <div class="kval">0%</div>
+          </div>`;
+      }).join('');
+      $('#axisBars').innerHTML = rows;
+      $$('#axisBars .krow').forEach(row=>{
+        const fill=row.querySelector('.fill'); const to=+fill.dataset.target;
+        const val=row.querySelector('.kval'); const start=performance.now(); const dur=750;
+        function step(t){
+          const p=Math.min(1,(t-start)/dur); const v=Math.round(to*p);
+          fill.style.width = v+'%'; val.textContent=v+'%';
+          if(p<1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+      });
     }
 
     function profileText(top3){
@@ -390,55 +439,13 @@
       return {name, desc};
     }
 
-    function spotlight(){
-      $('#pair').innerHTML='';
-      $('#bar').style.width='100%';
-      $('#bartext').textContent=`${totalMatches} / ${totalMatches}`;
-      $('#roundTag').textContent='🏆 우승 확정';
-
-      const poster = winner.poster || POSTER_FALLBACK;
-      $('#spotMedia').innerHTML = `<video src="${winner.media}" poster="${poster}" autoplay muted loop playsinline preload="metadata"></video>`;
-
-      setView('spot'); countdown(3, showResult);
-    }
-
-    function fillResult(withWinner){
-      const top3=calcProfile(withWinner); const {name,desc}=profileText(top3);
-      const poster = withWinner.poster || POSTER_FALLBACK;
-      $('#winnerMedia').innerHTML = `<video src="${withWinner.media}" poster="${poster}" autoplay muted loop playsinline preload="metadata"></video>`;
-      $('#profileTitle').textContent=`당신은 «${name}» 타입`;
-      $('#profileDesc').textContent=desc;
-
-      // 태그 칩
-      $('#profileTags').innerHTML=(withWinner.tags||[]).map(t=>`<span class="tag">#${t}</span>`).join('');
-
-      // KPI 바(퍼센트 + 애니메이션)
-      const rows = top3.map(([k,v])=>{
-        const pct = Math.min(100, Math.round((v/4.5)*100));
-        return `
-          <div class="krow">
-            <div class="kname">${k}</div>
-            <div class="meter"><div class="fill" style="width:0%" data-target="${pct}"></div></div>
-            <div class="kval">0%</div>
-          </div>`;
-      }).join('');
-      $('#axisBars').innerHTML = rows;
-
-      $$('#axisBars .krow').forEach(row=>{
-        const fill=row.querySelector('.fill'); const to=+fill.dataset.target;
-        const val=row.querySelector('.kval'); const start=performance.now(); const dur=750;
-        function step(t){
-          const p=Math.min(1,(t-start)/dur); const v=Math.round(to*p);
-          fill.style.width = v+'%'; val.textContent=v+'%';
-          if(p<1) requestAnimationFrame(step);
-        }
-        requestAnimationFrame(step);
-      });
-    }
-
     function showResult(){
-      fillResult(winner);
+      // 우승 화면 닫고 결과 화면만
       setView('result');
+      fillResult(winner);
+      // 공유 링크 준비
+      const url = new URL(location.href); if(winner) url.searchParams.set('winner', winner.id);
+      $('#shareUrl').value = url.toString();
     }
 
     function countdown(sec,done){
@@ -446,23 +453,21 @@
       const iv=setInterval(()=>{ t--; el.textContent=`(${t}s)`; if(t<=0){clearInterval(iv); el.textContent=''; done();}},1000);
     }
 
-    /* ===== 간단 공유(링크 표시/복사) ===== */
+    /* ===== 공유(링크만) ===== */
     function currentShareUrl(){
       const url = new URL(location.href);
       if(winner) url.searchParams.set('winner', winner.id);
       return url.toString();
     }
     function toggleShareLine(show){
-      $('#shareLine').style.display = show ? 'flex' : 'none';
-      if(show){
-        const u = currentShareUrl();
-        $('#shareUrl').value = u;
-      }
+      const line = $('#shareLine');
+      line.style.display = show ? 'flex' : 'none';
+      if(show) $('#shareUrl').value = currentShareUrl();
     }
     $('#btnShare').addEventListener('click', ()=> toggleShareLine(true));
     $('#btnCopy').addEventListener('click', ()=> copyToClipboard($('#shareUrl').value));
 
-    /* ===== 기타 이벤트 & 딥링크 처리 ===== */
+    /* ===== 기타 이벤트 & 딥링크 ===== */
     $('#btnHome').addEventListener('click', ()=> location.href='index.html');
     $('#btnAgain').addEventListener('click', ()=>{ toggleShareLine(false); start(); });
 
@@ -480,15 +485,15 @@
       const found = CARDS_16.find(c=>c.id===id);
       if(!found) return false;
       winner = found;
+      setView('result'); // 먼저 결과로 전환
       fillResult(winner);
-      setView('result');
-      // 결과 화면에서도 공유 링크 즉시 준비(표시 여부는 버튼으로)
       $('#shareUrl').value = currentShareUrl();
       return true;
     }
 
     document.addEventListener('DOMContentLoaded', ()=>{
       if(!openWinnerByQuery()) start();
+      else toggleShareLine(true); // 공유 링크 노출(선택 사항)
     });
   </script>
 </body>
